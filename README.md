@@ -3,9 +3,11 @@
 To run the agents on Mac (linux should work too):
 
 - Download and install StarCraft II
-- In the game, create a directory "Maps" and "Replays"
+- In the game directory, create a directory "Maps" and "Replays"
+    - Mac: `/Applications/StarCraft II/`
+    - Windows: `C:\Program Files (x86)\StarCraft II\`
 - Under Maps, create directory "mini_games" and should contains all the files downloaded from mini_games
-  - mini_games can be found in the forked repository pysc2
+    - mini_games can be found in the forked repository pysc2
     https://github.com/TheBottles/pysc2/tree/master/pysc2/maps/mini_games
 
 ### Command
