@@ -13,7 +13,10 @@ To run the agents on Mac (linux should work too):
     https://github.com/TheBottles/pysc2/tree/master/pysc2/maps/mini_games
 
 ### Command
-        $ python -m pysc2.bin.agent --map MoveToBeacon --agent <PATH_TO_PYTHON_FILE.PYTHON_CLASS>
+        $ python -m pysc2.bin.agent --map DefeatRoaches --agent <PATH_TO_PYTHON_FILE.PYTHON_CLASS>
 
 ##### Example
-        $ python -m pysc2.bin.agent --map MoveToBeacon --agent agent1.Agent1
+
+        $ python -m pysc2.bin.agent --map DefeatRoaches --agent agent.Agent
+
+Note: for this command to work, you must cd into the folder containing the `agent.py` file.
