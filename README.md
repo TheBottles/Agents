@@ -7,6 +7,8 @@ To run the agents on Mac (linux should work too):
     - Mac: `/Applications/StarCraft II/`
     - Windows: `C:\Program Files (x86)\StarCraft II\`
 - Under Maps, create directory "mini_games" and should contains all the files downloaded from mini_games
+    - Mac: `/Applications/StarCraft II/Maps/mini_games/`
+    - Windows: `C:\Program Files (x86)\StarCraft II\Maps\mini_games\`
     - mini_games can be found in the forked repository pysc2
     https://github.com/TheBottles/pysc2/tree/master/pysc2/maps/mini_games
 
@@ -14,5 +16,4 @@ To run the agents on Mac (linux should work too):
         $ python -m pysc2.bin.agent --map MoveToBeacon --agent <PATH_TO_PYTHON_FILE.PYTHON_CLASS>
 
 ##### Example
-
         $ python -m pysc2.bin.agent --map MoveToBeacon --agent agent1.Agent1
