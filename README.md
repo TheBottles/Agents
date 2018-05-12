@@ -10,9 +10,8 @@ To run the agents on Mac (linux should work too):
     - mini_games can be found in the forked repository pysc2
     https://github.com/TheBottles/pysc2/tree/master/pysc2/maps/mini_games
 
-### Command (YOU HAVE TO BE IN THE AGENTS FOLDER TO RUN THIS DAMN COMMAND)
-
-        $ python -m pysc2.bin.agent --map MoveToBeacon --agent <PYTHONFILE.PYTHONCLASS>
+### Command
+        $ python -m pysc2.bin.agent --map MoveToBeacon --agent <PATH_TO_PYTHON_FILE.PYTHON_CLASS>
 
 ##### Example
 
