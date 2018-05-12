@@ -96,8 +96,9 @@ The classes include:
 4. Functions
     - Represents the full set of functions.
     - Most in depth part and requires more research.
-5. FunctionCall
+5. **FunctionCall**
     - Represents a function call action.
+    - **This is what is returned by the step function in agent.**
     - Attributes:
         1. function: Store the function id, eg 2 for select_point.
         2. arguments: The list of arguments for that function, each being a list of ints. For select_point this could be: [[0], [23, 38]].
