@@ -14,34 +14,49 @@ The collection of actions include:
 
 1. **move_camera**
     - Moves the camera to a specified location.
+    - params: action, minimap
 2. **select_point**
     - Selects a unit at a point.
+    - params: action, select_point_act, screen
 3. **select_rect**
     - Selects units within a rectangle.
+    - params: action, select_add, screen, screen2
 4. set_idle_worker
     - Selects an idle worker.
+    - params: action, select_worker
 5. **select_army**
     - Selects all army units.
+    - params: action, select_add
 6. select_warp_gates
     - Selects all warp gates.
+    - params: action, select_add
 7. select_larva
     - Selects all larva
+    - params: action
 8. **select_unit**
     - Selects a specific unit from the multi-unit selection.
+    - params: action, select_unit_act, select_unit_id
 9. **control_group**
     - Acts on a control group, selecting, setting etc.
+    - params: action, control_group_act, control_gorup_id
 10. unload
     - Unload a unit from a transport/bunker/nydus/etc.
+    - params: action, unload_id
 11. build_queue
     - Cancel a unit in the build queue.
+    - params: action, build_queue_id
 12. cmd_quick
     - Do a quick command like 'Stop' or 'Stim'.
+    - params: action, ability_id, queued
 13. cmd_screen
     - Do a command that needs a point on the screen.
+    - params: action, ability_id, queued, screen
 14. cmd_minimap
     - Do a command that needs a point on the minimap.
+    - params: action, ability_id, queued, minimap
 15. autocast
     - Toggle autocast
+    - params: action, ability_id
 
 The classes include:
 
@@ -81,8 +96,9 @@ The classes include:
 4. Functions
     - Represents the full set of functions.
     - Most in depth part and requires more research.
-5. FunctionCall
+5. **FunctionCall**
     - Represents a function call action.
+    - **This is what is returned by the step function in agent.**
     - Attributes:
         1. function: Store the function id, eg 2 for select_point.
         2. arguments: The list of arguments for that function, each being a list of ints. For select_point this could be: [[0], [23, 38]].
