@@ -45,12 +45,12 @@ def get_state(obs):
     beaconxs, beaconys = (ai_view == _AI_NEUTRAL).nonzero()
     marinexs, marineys = (ai_view == _AI_SELF).nonzero()
     marinex, mariney = marinexs.mean(), marineys.mean()
-        
+
     marine_on_beacon = np.min(beaconxs) <= marinex <=  np.max(beaconxs) and np.min(beaconys) <= mariney <=  np.max(beaconys)
-        
+
     ai_selected = obs.observation['screen'][_AI_SELECTED]
     marine_selected = int((ai_selected == 1).any())
-    
+
     return (marine_selected, int(marine_on_beacon)), [beaconxs, beaconys]
 
 class QTable(object):
@@ -60,10 +60,11 @@ class QTable(object):
         self.reward_decay = reward_decay
         self.states_list = set()
         self.load_qt = load_qt
+        self.obs
         if load_st:
             temp = self.load_states(load_st)
             self.states_list = set([tuple(temp[i]) for i in range(len(temp))])
-        
+
         if load_qt:
             self.q_table = self.load_qtable(load_qt)
         else:
@@ -78,11 +79,11 @@ class QTable(object):
             idx = list(self.states_list).index(state)
             q_values = self.q_table[idx]
             return int(np.argmax(q_values))
-    
+
     def add_state(self, state):
         self.q_table = np.vstack([self.q_table, np.zeros((1, len(possible_actions)))])
         self.states_list.add(state)
-    
+
     def update_qtable(self, state, next_state, action, reward):
         if state not in self.states_list:
             self.add_state(state)
@@ -96,35 +97,38 @@ class QTable(object):
         loss = q_targets - q_state
         self.q_table[state_idx, action] += self.lr * loss
         return loss
-    
+
     def get_size(self):
         print(self.q_table.shape)
-        
+
     def save_qtable(self, filepath):
         np.save(filepath, self.q_table)
-        
+
     def load_qtable(self, filepath):
         return np.load(filepath)
-        
+
     def save_states(self, filepath):
         temp = np.array(list(self.states_list))
         np.save(filepath, temp)
-         
+
     def load_states(self, filepath):
         return np.load(filepath)
-    
+
 class Agent3(base_agent.BaseAgent):
     def __init__(self, load_qt=None, load_st=None):
         super(Agent3, self).__init__()
         self.qtable = QTable(possible_actions, load_qt="agent3_qtable.npy", load_st="agent3_states.npy")
-        
+
     def step(self, obs):
         '''Step function gets called automatically by pysc2 environment'''
         super(Agent3, self).step(obs)
         state, beacon_pos = get_state(obs)
         action = self.qtable.get_action(state)
         func = actions.FunctionCall(_NO_OP, [])
-        
+        self.prev = self.curr
+        self.curr = get_state(obs)
+
+
         if possible_actions[action] == _NO_OP:
             func = actions.FunctionCall(_NO_OP, [])
         elif state[0] and possible_actions[action] == _MOVE_SCREEN:
@@ -145,3 +149,5 @@ class Agent3(base_agent.BaseAgent):
         elif state[0] and possible_actions[action] == _MOVE_MIDDLE:
             func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [32, 32]])
         return func
+    def __def__(self):
+        self.update_qtable(self.prev, self.curr, action, reward)
