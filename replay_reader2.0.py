@@ -20,6 +20,7 @@ import sys
 import threading
 import time
 
+# python3 replay_reader2.0.py --replays /home/spirt/Documents/ECS170/Replays
 
 FLAGS = flags.FLAGS
 flags.mark_flag_as_required("replays")
