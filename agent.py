@@ -30,9 +30,12 @@ _AI_HOSTILE = 4
 _SELECT_ALL = [0]
 _NOT_QUEUED = [0]
 
+<<<<<<< HEAD
 np.set_printoptions(precision=3)
 
 
+=======
+>>>>>>> 404d9b8db39557b0659fb25ef1d4352b1cdedc89
 def get_marine_location(ai_relative_view):
     '''get the indices where the world is equal to 1'''
     return (ai_relative_view == _AI_SELF).nonzero()
@@ -43,6 +46,7 @@ def get_rand_location(ai_location):
 
 class Agent(base_agent.BaseAgent):
     """An agent for doing a simple movement form one point to another."""
+<<<<<<< HEAD
     def __init__(self):
         super().__init__()
         self.obs_tracker = np.array([])
@@ -53,6 +57,12 @@ class Agent(base_agent.BaseAgent):
         # This is part of the data collection so we can train our learners
         self.obs_tracker = np.append(self.obs_tracker, obs, axis = 0)
         super(Agent, self).step(obs)
+=======
+    def step(self, obs):
+        '''step function gets called automatically by pysc2 environment'''
+        # call the parent class to have pysc2 setup rewards/etc for us
+        super(Agent1, self).step(obs)
+>>>>>>> 404d9b8db39557b0659fb25ef1d4352b1cdedc89
         # if we can move our army (we have something selected)
         if _MOVE_SCREEN in obs.observation['available_actions']:
             # get what the ai can see about the world
@@ -69,7 +79,10 @@ class Agent(base_agent.BaseAgent):
         # if we can't move, we havent selected our army, so selecto ur army
         else:
             return actions.FunctionCall(_SELECT_ARMY, [_SELECT_ALL])
+<<<<<<< HEAD
 
     def __del__(self):
         # save the collected observation data for use later
         np.save("single_game_obs", self.obs_tracker)
+=======
+>>>>>>> 404d9b8db39557b0659fb25ef1d4352b1cdedc89
