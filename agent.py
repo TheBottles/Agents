@@ -32,11 +32,7 @@ _NOT_QUEUED = [0]
 
 np.set_printoptions(precision=3)
 
-<<<<<<< HEAD
-=======
 
-
->>>>>>> e83bd716ad1617eb235eb715d6b3437cf5e13cde
 def get_marine_location(ai_relative_view):
     '''get the indices where the world is equal to 1'''
     return (ai_relative_view == _AI_SELF).nonzero()
@@ -57,10 +53,7 @@ class Agent(base_agent.BaseAgent):
         # This is part of the data collection so we can train our learners
         self.obs_tracker = np.append(self.obs_tracker, obs, axis = 0)
         super(Agent, self).step(obs)
-<<<<<<< HEAD
-=======
 
->>>>>>> e83bd716ad1617eb235eb715d6b3437cf5e13cde
         # if we can move our army (we have something selected)
         if _MOVE_SCREEN in obs.observation['available_actions']:
             # get what the ai can see about the world
