@@ -6,6 +6,7 @@ from pysc2.lib import features
 from pysc2.env import sc2_env, run_loop, available_actions_printer
 from pysc2 import maps
 from absl import flags
+import os
 
 _AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _AI_SELECTED = features.SCREEN_FEATURES.selected.index
@@ -150,7 +151,8 @@ class Agent3(base_agent.BaseAgent):
             func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [beacon_y, beacon_x]])
         elif state[0] and possible_actions[action] == _MOVE_MIDDLE:
             func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [32, 32]])
+        # print("----------------------------------")
+        # print(os.getcwd())
+        self.qtable.save_qtable('qtable')
+        self.qtable.save_states('states')
         return func
-
-        def __del__(self):
-            self.qtable.save_qtable(self, 'qtable')
