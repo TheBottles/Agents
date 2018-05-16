@@ -8,6 +8,8 @@ from pysc2 import maps
 from absl import flags
 import os
 
+np.set_printoptions(suppress=True)
+
 _AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _AI_SELECTED = features.SCREEN_FEATURES.selected.index
 _NO_OP = actions.FUNCTIONS.no_op.id
@@ -117,15 +119,20 @@ class QTable(object):
 class Agent3(base_agent.BaseAgent):
     def __init__(self, load_qt=None, load_st=None):
         super(Agent3, self).__init__()
-        self.qtable = QTable(possible_actions, load_qt=None, load_st=None)
+        self.qtable = QTable(possible_actions, load_qt="qTable-MoveToBacon.npy", load_st="qStates-moveToBacon.npy")
         self.steps = 0
 
     def step(self, obs):
         '''Step function gets called automatically by pysc2 environment'''
         super(Agent3, self).step(obs)
         state, beacon_pos = get_state(obs)
+
         if not obs.first():
             self.qtable.update_qtable(self.prev_state, state, self.prev_action, obs.reward)
+        if obs.last():
+            self.qtable.save_qtable('qTable-MoveToBacon')
+            self.qtable.save_states('qStates-MoveToBacon')
+
         self.prev_state = state
         action = self.qtable.get_action(state)
         self.prev_action = action
@@ -151,8 +158,4 @@ class Agent3(base_agent.BaseAgent):
             func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [beacon_y, beacon_x]])
         elif state[0] and possible_actions[action] == _MOVE_MIDDLE:
             func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [32, 32]])
-        # print("----------------------------------")
-        # print(os.getcwd())
-        self.qtable.save_qtable('qtable')
-        self.qtable.save_states('states')
         return func
