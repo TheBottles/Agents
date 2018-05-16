@@ -5,15 +5,21 @@ function which is used by an agent to make actions. In our case, it is the
 `obs` object.
 
 `obs` is a dictionary containing the following keys:
-- `single_select`
-- `multi_select`
-- `build_queue`
-- `cargo`
-- `cargo_slots_available`
-- `screen`
-- `minimap`
-- `game_loop`
-- `score_cumulative`
-- `player`
-- `control_groups`
-- `available_actions`
+-`.step_type`
+-`.reward`
+-`.discount`
+-`.observation[]`
+-- `single_select`
+-- `multi_select`
+-- `build_queue`
+-- `cargo`
+-- `cargo_slots_available`
+-- `screen`
+-- `minimap`
+-- `game_loop`
+-- `score_cumulative`
+-- `player`
+-- `control_groups`
+-- `available_actions`
+-`.first()`
+-`.last()`
