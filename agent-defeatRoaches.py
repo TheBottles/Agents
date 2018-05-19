@@ -6,6 +6,9 @@ from pysc2.lib import features
 from pysc2.env import sc2_env, run_loop, available_actions_printer
 from pysc2 import maps
 from absl import flags
+import os
+
+np.set_printoptions(suppress=True)
 
 _AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _AI_SELECTED = features.SCREEN_FEATURES.selected.index
@@ -40,18 +43,18 @@ possible_actions = [
 def get_eps_threshold(steps_done):
     return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
 
-def get_state(obs):
-    ai_view = obs.observation['screen'][_AI_RELATIVE]
-    beaconxs, beaconys = (ai_view == _AI_NEUTRAL).nonzero()
-    marinexs, marineys = (ai_view == _AI_SELF).nonzero()
-    marinex, mariney = marinexs.mean(), marineys.mean()
+# def get_state(obs):
+#     ai_view = obs.observation['screen'][_AI_RELATIVE]
+#     beaconxs, beaconys = (ai_view == _AI_NEUTRAL).nonzero()
+#     marinexs, marineys = (ai_view == _AI_SELF).nonzero()
+#     marinex, mariney = marinexs.mean(), marineys.mean()
 
-    marine_on_beacon = np.min(beaconxs) <= marinex <=  np.max(beaconxs) and np.min(beaconys) <= mariney <=  np.max(beaconys)
+#     marine_on_beacon = np.min(beaconxs) <= marinex <=  np.max(beaconxs) and np.min(beaconys) <= mariney <=  np.max(beaconys)
 
-    ai_selected = obs.observation['screen'][_AI_SELECTED]
-    marine_selected = int((ai_selected == 1).any())
+#     ai_selected = obs.observation['screen'][_AI_SELECTED]
+#     marine_selected = int((ai_selected == 1).any())
 
-    return (marine_selected, int(marine_on_beacon)), [beaconxs, beaconys]
+#     return (marine_selected, int(marine_on_beacon)), [beaconxs, beaconys]
 
 class QTable(object):
     def __init__(self, actions, lr=0.01, reward_decay=0.9, load_qt=None, load_st=None):
@@ -60,7 +63,6 @@ class QTable(object):
         self.reward_decay = reward_decay
         self.states_list = set()
         self.load_qt = load_qt
-        self.obs
         if load_st:
             temp = self.load_states(load_st)
             self.states_list = set([tuple(temp[i]) for i in range(len(temp))])
@@ -114,40 +116,48 @@ class QTable(object):
     def load_states(self, filepath):
         return np.load(filepath)
 
-class Agent3(base_agent.BaseAgent):
+class Agent_DR(base_agent.BaseAgent):
     def __init__(self, load_qt=None, load_st=None):
-        super(Agent3, self).__init__()
-        self.qtable = QTable(possible_actions, load_qt="agent3_qtable.npy", load_st="agent3_states.npy")
+        super(Agent_DR, self).__init__()
+        self.qtable = QTable(possible_actions, load_qt="qTable-MoveToBacon.npy", load_st="qStates-moveToBacon.npy")
+        self.steps = 0
 
     def step(self, obs):
         '''Step function gets called automatically by pysc2 environment'''
-        super(Agent3, self).step(obs)
-        state, beacon_pos = get_state(obs)
-        action = self.qtable.get_action(state)
-        func = actions.FunctionCall(_NO_OP, [])
-        self.prev = self.curr
-        self.curr = get_state(obs)
+        super(Agent_DR, self).step(obs)
+        # state, beacon_pos = get_state(obs)
 
+        # if not obs.first():
+        #     self.qtable.update_qtable(self.prev_state, state, self.prev_action, obs.reward)
+        # if obs.last():
+        #     self.qtable.save_qtable('qTable-MoveToBacon')
+        #     self.qtable.save_states('qStates-MoveToBacon')
 
-        if possible_actions[action] == _NO_OP:
-            func = actions.FunctionCall(_NO_OP, [])
-        elif state[0] and possible_actions[action] == _MOVE_SCREEN:
-            beacon_x, beacon_y = beacon_pos[0].mean(), beacon_pos[1].mean()
-            func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [beacon_y, beacon_x]])
-        elif possible_actions[action] == _SELECT_ARMY:
-            func = actions.FunctionCall(_SELECT_ARMY, [_SELECT_ALL])
-        elif state[0] and possible_actions[action] == _SELECT_POINT:
-            ai_view = obs.observation['screen'][_AI_RELATIVE]
-            backgroundxs, backgroundys = (ai_view == _BACKGROUND).nonzero()
-            point = np.random.randint(0, len(backgroundxs))
-            backgroundx, backgroundy = backgroundxs[point], backgroundys[point]
-            func = actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, [backgroundy, backgroundx]])
-        elif state[0] and possible_actions[action] == _MOVE_RAND:
-            beacon_x, beacon_y = beacon_pos[0].max(), beacon_pos[1].max()
-            #movex, movey = np.random.randint(beacon_x, 64), np.random.randint(beacon_y, 64)
-            func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [beacon_y, beacon_x]])
-        elif state[0] and possible_actions[action] == _MOVE_MIDDLE:
-            func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [32, 32]])
+        # self.prev_state = state
+        # action = self.qtable.get_action(state)
+        # self.prev_action = action
+        target = (np.random.randint(0, 64), np.random.randint(0, 64))
+        func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target])
+
+        # self.steps += 1
+
+        # if possible_actions[action] == _NO_OP:
+        #     func = actions.FunctionCall(_NO_OP, [])
+        # elif state[0] and possible_actions[action] == _MOVE_SCREEN:
+        #     beacon_x, beacon_y = beacon_pos[0].mean(), beacon_pos[1].mean()
+        #     func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [beacon_y, beacon_x]])
+        # elif possible_actions[action] == _SELECT_ARMY:
+        #     func = actions.FunctionCall(_SELECT_ARMY, [_SELECT_ALL])
+        # elif state[0] and possible_actions[action] == _SELECT_POINT:
+        #     ai_view = obs.observation['screen'][_AI_RELATIVE]
+        #     backgroundxs, backgroundys = (ai_view == _BACKGROUND).nonzero()
+        #     point = np.random.randint(0, len(backgroundxs))
+        #     backgroundx, backgroundy = backgroundxs[point], backgroundys[point]
+        #     func = actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, [backgroundy, backgroundx]])
+        # elif state[0] and possible_actions[action] == _MOVE_RAND:
+        #     beacon_x, beacon_y = beacon_pos[0].max(), beacon_pos[1].max()
+        #     #movex, movey = np.random.randint(beacon_x, 64), np.random.randint(beacon_y, 64)
+        #     func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [beacon_y, beacon_x]])
+        # elif state[0] and possible_actions[action] == _MOVE_MIDDLE:
+        #     func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [32, 32]])
         return func
-    def __def__(self):
-        self.update_qtable(self.prev, self.curr, action, reward)
