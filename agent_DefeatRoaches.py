@@ -48,7 +48,6 @@ def get_state(obs):
      ai_view = obs.observation['screen'][_AI_RELATIVE]
      # need a better way to determine target destination, roach range is 4
      targetxs, targetys = (ai_view == _AI_HOSTILE ).nonzero()
-     targetxs = np.max(targetxs)
      targetxs += 5
      targetys += 5
      marinexs, marineys = (ai_view == _AI_SELF).nonzero()
