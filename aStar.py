@@ -5,11 +5,12 @@ from pysc2.lib import features
 from pysc2.env import sc2_env, run_loop, available_actions_printer
 from pysc2 import maps
 from absl import flags
-from queue import PriorityQueue
+from queue import PriorityQueue #Dan researched
 
 _PLAYER_HOSTILE = 4
 _PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 
+#Implemented by Susie, touched up by Dan
 def aStar(map, start, goal):
     
     open = PriorityQueue()
@@ -43,8 +44,8 @@ def aStar(map, start, goal):
             if next not in prev_cost or new_cost>prev_cost[next]:
                 prev_cost[next] = new_cost
                 f = new_cost + heuristic(goal, next)
-                open.put(f, point)
-                path[point] = current
+                open.put(f, next)
+                path[next] = current
 
 
 
@@ -60,6 +61,7 @@ def cost(point1, point2):
     
     return 1
 
+#Implemented by Erick
 def pathfinding(obs):
     """get the lists of x and y coordinates for the enemy locations"""
     enemy_y_location, enemy_x_location(obs.observation.['minimap'][_PLAYER_RELATIVE] == _PLAYER_HOSTILE).nonzero()
