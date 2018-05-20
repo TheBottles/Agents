@@ -65,8 +65,13 @@ def get_eps_threshold(steps_done):
 
 def get_EnemyCoords(obs):
     ai_view = obs.observation['screen'][_AI_RELATIVE]
-    targetxs, targetys = (ai_view == _AI_HOSTILE ).nonzero()
-    return targetxs, targetys
+    return (ai_view == _AI_HOSTILE ).nonzero()
+
+def get_AICoords(obs):
+    ai_view = obs.observation['screen'][_AI_RELATIVE]
+    return (ai_view == _AI_SELF).nonzero()
+
+
 
 def get_state(obs):
      ai_view = obs.observation['screen'][_AI_RELATIVE]
