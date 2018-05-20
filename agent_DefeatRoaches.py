@@ -44,18 +44,37 @@ possible_actions = [
     _MOVE_MIDDLE
 ]
 
+def getTarget(obs):
+    targetxs, targetys = get_EnemyCoords(obs)
+    xmax = np.argmax(targetxs)
+    xmin = np.argmin(targetxs)
+    ymax = np.argmax(targetys)
+    ymin = np.argmin(targetys)
+    print(xmin, xmax, ymin, ymax)
+    pprint(targetxs)
+    pprint(targetys)
+    labely = (ymax- ymin)
+    labelx = (xmax- ymin)
+    area = { labely: 'y', labelx: 'x'}
+    label = area[min (labely, labelx )]
+    if label == 'y':
+        return targetxs[list(targetys).index(ymin)], ymin
+    else:
+        return xmin, targetys[list(targetxs).index(xmin)]
+
+
 def get_eps_threshold(steps_done):
     return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
 
 def get_EnemyCoords(obs):
     ai_view = obs.observation['screen'][_AI_RELATIVE]
     targetxs, targetys = (ai_view == _AI_HOSTILE ).nonzero()
-    return targetxs, targetys   
-    
+    return targetxs, targetys
+
 def get_state(obs):
      ai_view = obs.observation['screen'][_AI_RELATIVE]
      # need a better way to determine target destination, roach range is 4
-     targetxs,targetys = get_EnemyCoords(obs)
+     targetxs,targetys = getTarget(obs)
      targetxs += 5
      targetys += 5
      pprint(obs)
@@ -135,7 +154,7 @@ class Agent_DR(base_agent.BaseAgent):
         self.qtable = QTable(possible_actions, load_qt="qTable-MoveToBacon.npy", load_st="qStates-MoveToBacon.npy")
         self.steps = 0
     #def __del__(self):
-        
+
     def step(self, obs):
         '''Step function gets called automatically by pysc2 environment'''
         super(Agent_DR, self).step(obs)
@@ -148,7 +167,7 @@ class Agent_DR(base_agent.BaseAgent):
         if obs.last():
             self.qtable.save_qtable('qTable-MoveToBacon')
             self.qtable.save_states('qStates-MoveToBacon')
-            
+
         self.prev_state = state
         action = self.qtable.get_action(state)
         self.prev_action = action
