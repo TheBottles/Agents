@@ -53,15 +53,12 @@ def getTarget(obs):
     print(xmin, xmax, ymin, ymax)
     pprint(targetxs)
     pprint(targetys)
-    labely = (ymax- ymin)
-    labelx = (xmax- ymin)
-    area = { labely: 'y', labelx: 'x'}
-    label = area[min (labely, labelx )]
-    if label == 'y':
-        return targetxs[list(targetys).index(ymin)], ymin
+    labely = (targetys[ymax]- targetys[ymin])
+    labelx = (targetxs[xmax]- targetxs[xmin])
+    if labelx > labely:
+        return targetxs[ymin], targetys[ymin]
     else:
-        return xmin, targetys[list(targetxs).index(xmin)]
-
+        return targetxs[xmin], targetys[xmin]
 
 def get_eps_threshold(steps_done):
     return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
@@ -75,8 +72,6 @@ def get_state(obs):
      ai_view = obs.observation['screen'][_AI_RELATIVE]
      # need a better way to determine target destination, roach range is 4
      targetxs,targetys = getTarget(obs)
-     targetxs += 5
-     targetys += 5
      marinexs, marineys = (ai_view == _AI_SELF).nonzero()
      marinex, mariney = marinexs.mean(), marineys.mean()
      marine_on_target = np.min(targetxs) <= marinex <=  np.max(targetxs) and np.min(targetys) <= mariney <=  np.max(targetys)
