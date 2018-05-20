@@ -8,6 +8,9 @@ from pysc2 import maps
 from absl import flags
 import os
 import time
+from s2clientprotocol import raw_pb2 as sc_raw
+from s2clientprotocol import sc2api_pb2 as sc_pb
+from pprint import pprint
 
 np.set_printoptions(suppress=True)
 
@@ -44,15 +47,20 @@ possible_actions = [
 def get_eps_threshold(steps_done):
     return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
 
+def get_EnemyCoords(obs):
+    ai_view = obs.observation['screen'][_AI_RELATIVE]
+    targetxs, targetys = (ai_view == _AI_HOSTILE ).nonzero()
+    return targetxs, targetys   
+    
 def get_state(obs):
      ai_view = obs.observation['screen'][_AI_RELATIVE]
      # need a better way to determine target destination, roach range is 4
-     targetxs, targetys = (ai_view == _AI_HOSTILE ).nonzero()
+     targetxs,targetys = get_EnemyCoords(obs)
      targetxs += 5
      targetys += 5
+     pprint(obs)
      marinexs, marineys = (ai_view == _AI_SELF).nonzero()
      marinex, mariney = marinexs.mean(), marineys.mean()
-
      marine_on_target = np.min(targetxs) <= marinex <=  np.max(targetxs) and np.min(targetys) <= mariney <=  np.max(targetys)
 
      ai_selected = obs.observation['screen'][_AI_SELECTED]
@@ -78,6 +86,7 @@ class QTable(object):
 
     def get_action(self, state):
         if not self.load_qt and np.random.rand() < get_eps_threshold(steps):
+            # currently arbitrarily picks an action if the state does not already exist
             return np.random.randint(0, len(self.actions))
         else:
             if state not in self.states_list:
@@ -125,14 +134,17 @@ class Agent_DR(base_agent.BaseAgent):
         super(Agent_DR, self).__init__()
         self.qtable = QTable(possible_actions, load_qt="qTable-MoveToBacon.npy", load_st="qStates-MoveToBacon.npy")
         self.steps = 0
-
+    #def __del__(self):
+        
     def step(self, obs):
         '''Step function gets called automatically by pysc2 environment'''
         super(Agent_DR, self).step(obs)
+        pprint(obs)
         state, target_pos = get_state(obs)
 
         if not obs.first():
-            self.qtable.update_qtable(self.prev_state, state, self.prev_action, obs.reward)
+            score = obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5]+obs.observation['score_cumulative'][0]
+            self.qtable.update_qtable(self.prev_state, state, self.prev_action, score)
         if obs.last():
             self.qtable.save_qtable('qTable-MoveToBacon')
             self.qtable.save_states('qStates-MoveToBacon')
