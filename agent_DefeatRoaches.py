@@ -77,7 +77,6 @@ def get_state(obs):
      targetxs,targetys = getTarget(obs)
      targetxs += 5
      targetys += 5
-     pprint(obs)
      marinexs, marineys = (ai_view == _AI_SELF).nonzero()
      marinex, mariney = marinexs.mean(), marineys.mean()
      marine_on_target = np.min(targetxs) <= marinex <=  np.max(targetxs) and np.min(targetys) <= mariney <=  np.max(targetys)
@@ -158,7 +157,6 @@ class Agent_DR(base_agent.BaseAgent):
     def step(self, obs):
         '''Step function gets called automatically by pysc2 environment'''
         super(Agent_DR, self).step(obs)
-        pprint(obs)
         state, target_pos = get_state(obs)
 
         if not obs.first():
