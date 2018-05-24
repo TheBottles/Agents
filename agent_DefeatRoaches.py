@@ -192,7 +192,7 @@ class FlankingAgent(base_agent.BaseAgent):
         if possible_actions[action] == _NO_OP:
             func = actions.FunctionCall(_NO_OP, [])
         elif state[0] and possible_actions[action] == _MOVE_SCREEN:
-            target_x, target_y = A_star(obs, current_pos, target_pos)
+            target_x, target_y = A_Star(obs, current_pos, target_pos)
             func = actions.FunctionCall(
                 _MOVE_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
         elif possible_actions[action] == _SELECT_ARMY:

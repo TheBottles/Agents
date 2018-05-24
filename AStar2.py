@@ -1,6 +1,9 @@
 
 import math
 import heapq
+from coordgrabber import *
+import numpy as np
+# from math import round
 
 '''Script to implement A* algorithm for path from one point
 in X/Y plane to the other point'''
@@ -68,6 +71,19 @@ def find_loc(StateList, Atom):
 
     return i
 
+def heuristic(obs, location, target):
+    # Take the number of enemy units
+    # Our distance to target locations
+    # Distance to center of mass of enemy units
+    X, Y = location
+    X_Goal, Y_Goal = target
+    NUM_HOSTILE = get_num_enemies(obs)
+    TARGET_DISTANCE =  Distance_Calc(X_Goal, Y_Goal, X, Y)
+    Enemy_Locations = get_enemy_coords(obs)
+    X_Enemy, Y_Enemy = Enemy_Locations[0].mean(), Enemy_Locations[1].mean()
+    ENEMY_DISTANCE = Distance_Calc(X_Enemy, Y_Enemy, X, Y)
+
+    return NUM_HOSTILE + TARGET_DISTANCE + ENEMY_DISTANCE
 
 
 '''A* implementation using the class slides'''
@@ -86,6 +102,8 @@ def pathfinding(obs, Start, Graph, Goal):
     while len(heapOpen) > 0:
         heapq.heapify(heapOpen) #Update the heap
         Current = heapq.heappop(heapOpen)
+        print("---------- LOOK AT ME -------------")
+        Current.state = (int(Current.state[0]), int(Current.state[1]))
         if Current.state == Goal:
                 print("We got the current ", Current.state)
                 print("This is the closed:")
@@ -101,7 +119,8 @@ def pathfinding(obs, Start, Graph, Goal):
                 #There's 3 cases but only took accound for 2 so far
                 Temp = StateObject() #Create the StateObj for heap
                 #Distance from the goal + cost of moving one square
-                fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
+                # fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
+                fn = heuristic(obs, Start, Goal)
                 Temp.state = n
                 Temp.cost = fn
                 Temp.backpointer = Current.state
