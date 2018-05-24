@@ -12,6 +12,7 @@ from s2clientprotocol import raw_pb2 as sc_raw
 from s2clientprotocol import sc2api_pb2 as sc_pb
 from pprint import pprint
 from coordgrabber import *
+from AStar2 import *
 
 np.set_printoptions(suppress=True)
 
@@ -191,7 +192,7 @@ class FlankingAgent(base_agent.BaseAgent):
         if possible_actions[action] == _NO_OP:
             func = actions.FunctionCall(_NO_OP, [])
         elif state[0] and possible_actions[action] == _MOVE_SCREEN:
-            target_x, target_y = target_pos[0].mean(), target_pos[1].mean()
+            target_x, target_y = A_star(obs, current_pos, target_pos)
             func = actions.FunctionCall(
                 _MOVE_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
         elif possible_actions[action] == _SELECT_ARMY:
