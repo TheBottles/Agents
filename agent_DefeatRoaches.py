@@ -58,7 +58,7 @@ def get_target_coords(obs):
     # print(xmin, xmax, ymin, ymax)
     # pprint(targetxs)
     # pprint(targetys)
-    pprint(get_unit_types(obs, [targetxs, targetys]))
+    # pprint(get_unit_types(obs, [targetxs, targetys]))
     #Todo: transform the rectangle area to be angled
     labely = (targetys[ymax] - targetys[ymin])
     labelx = (targetxs[xmax] - targetxs[xmin])
