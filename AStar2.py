@@ -85,9 +85,16 @@ def heuristic(obs, location, target):
 
     return NUM_HOSTILE + TARGET_DISTANCE + ENEMY_DISTANCE
 
+"Converts an (x,y) coordinate to neighbor coordinates"
+def Graph(location, explored):
+    x,y = location
+    neighbors = [(x-1, y+1), (x, y+1), (x, y-1), (x+1, y), (x-1, y), (x-1, y-1), (x,y-1), (x+1, y-1)]
+    explored.update(set(neighbors))
+    return [n for n in neighbors if n not in explored]
+
 
 '''A* implementation using the class slides'''
-def pathfinding(obs, Start, Graph, Goal):
+def pathfinding(obs, Start, Goal):
     #Now we do all the agorithm here
     heapOpen = []
     heapClosed = []
@@ -97,12 +104,12 @@ def pathfinding(obs, Start, Graph, Goal):
     Temp.backpointer = Start
     heapOpen.append(Temp)
     heapq.heapify(heapOpen)
+    explored = set()
 
     #While 'Open' is not empty
     while len(heapOpen) > 0:
         heapq.heapify(heapOpen) #Update the heap
         Current = heapq.heappop(heapOpen)
-        print("---------- LOOK AT ME -------------")
         Current.state = (int(Current.state[0]), int(Current.state[1]))
         if Current.state == Goal:
                 print("We got the current ", Current.state)
@@ -114,13 +121,14 @@ def pathfinding(obs, Start, Graph, Goal):
                     print(y.state, " ", y.cost, " ", y.backpointer)
                 break
         else:
-            Neighbors = Graph[Current.state]
+            Neighbors = Graph(Current.state, explored)
+
             for n in Neighbors:
                 #There's 3 cases but only took accound for 2 so far
                 Temp = StateObject() #Create the StateObj for heap
                 #Distance from the goal + cost of moving one square
-                # fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
-                fn = heuristic(obs, Start, Goal)
+                fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
+                # fn = heuristic(obs, Start, Goal)
                 Temp.state = n
                 Temp.cost = fn
                 Temp.backpointer = Current.state
@@ -136,6 +144,7 @@ def pathfinding(obs, Start, Graph, Goal):
                 else:
                     heapOpen.append(Temp)
                 heapClosed.append(Temp)
+        print("loopdy-loop")
 
     path = []
     done = False
@@ -169,26 +178,26 @@ def A_Star(obs, location, target):
     '''For the sake of implementation I started with 0,0
     but this will change based on where in the map we are
     since we are not always going to be at (0,0)'''
-    X,Y = target
-    List_X = list(range(0,X + 1))
-    List_Y = list(range(0,Y + 1))
-    Points = []
-    '''Account for instance when there are more Y's than X's'''
-    for x in List_X :
-        for y in List_Y:
-            Points.append([x,y])
-    Dic = dict()
-    for p in Points:
-        I = connecting_points(p, Points)
-        New_I = tuple(I)
-        Dic[tuple(p)] = New_I
-    Heap = []
+    # X,Y = target
+    # List_X = list(range(0,X + 1))
+    # List_Y = list(range(0,Y + 1))
+    # Points = []
+    # '''Account for instance when there are more Y's than X's'''
+    # for x in List_X :
+    #     for y in List_Y:
+    #         Points.append([x,y])
+    # Dic = dict()
+    # for p in Points:
+    #     I = connecting_points(p, Points)
+    #     New_I = tuple(I)
+    #     Dic[tuple(p)] = New_I
+    # Heap = []
+    #
+    # for key in Dic:
+    #     print("This is the state: ",key)
+    #     print(Dic[key])
 
-    for key in Dic:
-        print("This is the state: ",key)
-        print(Dic[key])
-
-    return pathfinding(obs,location,Dic,target)
+    return pathfinding(obs,location,target)
 
 
 
