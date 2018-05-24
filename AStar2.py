@@ -71,7 +71,7 @@ def find_loc(StateList, Atom):
 
 
 '''A* implementation using the class slides'''
-def pathfinding(Start, Graph, Goal):
+def pathfinding(obs, Start, Graph, Goal):
     #Now we do all the agorithm here
     heapOpen = []
     heapClosed = []
@@ -134,18 +134,23 @@ def pathfinding(Start, Graph, Goal):
 
     print("Finished")
     print(path)
-    return
+
+    try:
+        return path[-5]
+    except IndexError:
+        return path[0]
 
 '''For this algorithm we start at a "start" point and a "finish" point.
 We then make a dictionary that represents the "graph" that is the map.
 Each key in the dictionary is a tuple that represents a point and the value
 for each key is a tuple of tuples that represents all the other points
 that the current key connects to.'''
-def A_Star(X,Y):
+def A_Star(obs, location, target):
     #Account for the negative parts of the graph
     '''For the sake of implementation I started with 0,0
     but this will change based on where in the map we are
     since we are not always going to be at (0,0)'''
+    X,Y = target
     List_X = list(range(0,X + 1))
     List_Y = list(range(0,Y + 1))
     Points = []
@@ -164,10 +169,10 @@ def A_Star(X,Y):
         print("This is the state: ",key)
         print(Dic[key])
 
-    pathfinding((0,0),Dic,(X,Y))
+    return pathfinding(obs,location,Dic,target)
 
 
 
 if __name__ == "__main__":
     #These will change
-    A_Star(6,10)
+    print(A_Star(None, (0,0), (6,10)))
