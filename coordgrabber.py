@@ -27,3 +27,10 @@ def get_unit_types(obs, units):
     for each in obs.observation['screen']:
         pprint(each)
     return np.take(obs.observation['screen'][_UNIT_TYPE],units)
+
+def get_num_enemies(obs):
+    """ Takes in an observation
+        Returns number of enemies on the viewable screen
+    """
+    ai_view = obs.observation['screen'][_AI_RELATIVE]
+    return np.count_nonzero((ai_view == _AI_HOSTILE).nonzero())
