@@ -86,65 +86,86 @@ def heuristic(obs, location, target):
     return NUM_HOSTILE + TARGET_DISTANCE + ENEMY_DISTANCE
 
 "Converts an (x,y) coordinate to neighbor coordinates"
-def Graph(location, explored):
+def Graph(location):
     x,y = location
-    neighbors = [(x-1, y+1), (x, y+1), (x, y-1), (x+1, y), (x-1, y), (x-1, y-1), (x,y-1), (x+1, y-1)]
-    explored.update(set(neighbors))
-    return [n for n in neighbors if n not in explored]
+    thresh = 15
+    neighbors = [(x-thresh, y-thresh),  (x-thresh, y), (x-thresh, y+thresh), (x, y-thresh), (x+thresh, y-thresh), (x+thresh,y-thresh), (x+thresh, y), (x+thresh, y+thresh)]
+    goto = []
+    for n in neighbors:
+        if ( n[0] < 0  ) or ( n[0] >= 64) or ( n[1] < 0 ) or (n[1] >= 64):
+            continue
+        goto.append(n)
+    # explored.update(set(goto))
+    return goto
 
 
 '''A* implementation using the class slides'''
 def pathfinding(obs, Start, Goal):
+
+    neighbors = Graph(Start)
+    bestn = (0,0)
+    bestscore = np.inf
+    for n in neighbors:
+        fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
+        if fn < bestscore:
+            print(fn, "is better than", bestscore)
+            bestn = n
+            bestscore = fn
+        print(bestscore)
+    return bestn
+
+
+
+
     #Now we do all the agorithm here
-    heapOpen = []
-    heapClosed = []
-    Temp = StateObject()
-    Temp.state = Start
-    Temp.cost = Distance_Calc(Goal[0], Goal[1], Start[0], Start[1]) + 1
-    Temp.backpointer = Start
-    heapOpen.append(Temp)
-    heapq.heapify(heapOpen)
-    explored = set()
+    # heapOpen = []
+    # heapClosed = []
+    # Temp = StateObject()
+    # Temp.state = Start
+    # Temp.cost = Distance_Calc(Goal[0], Goal[1], Start[0], Start[1]) + 1
+    # Temp.backpointer = Start
+    # heapOpen.append(Temp)
+    # heapq.heapify(heapOpen)
+    # explored = set()
 
     #While 'Open' is not empty
-    while len(heapOpen) > 0:
-        heapq.heapify(heapOpen) #Update the heap
-        Current = heapq.heappop(heapOpen)
-        Current.state = (int(Current.state[0]), int(Current.state[1]))
-        if Current.state == Goal:
-                print("We got the current ", Current.state)
-                print("This is the closed:")
-                for s in heapClosed:
-                    print(s.state, " ", s.cost, " ", s.backpointer)
-                print("This is open: ")
-                for y in heapOpen:
-                    print(y.state, " ", y.cost, " ", y.backpointer)
-                break
-        else:
-            Neighbors = Graph(Current.state, explored)
-
-            for n in Neighbors:
-                #There's 3 cases but only took accound for 2 so far
-                Temp = StateObject() #Create the StateObj for heap
-                #Distance from the goal + cost of moving one square
-                fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
-                # fn = heuristic(obs, Start, Goal)
-                Temp.state = n
-                Temp.cost = fn
-                Temp.backpointer = Current.state
-                if find_state(heapOpen, Temp):
-                    index = find_loc(heapOpen, Temp)
-                    if heapOpen[index].cost > fn:
-                        heapClosed[index].cost = fn
-                        heapOpen[index].backpointer = Current.state
-
-                        index = find_loc(heapClosed,Temp)
-                        heapClosed[index].cost = fn
-                        heapClosed[index].backpointer = Current.state
-                else:
-                    heapOpen.append(Temp)
-                heapClosed.append(Temp)
-        print("loopdy-loop")
+    # while len(heapOpen) > 0:
+    #     heapq.heapify(heapOpen) #Update the heap
+    #     Current = heapq.heappop(heapOpen)
+    #     Current.state = (int(Current.state[0]), int(Current.state[1]))
+    #     if Current.state == Goal:
+    #             print("We got the current ", Current.state)
+    #             print("This is the closed:")
+    #             for s in heapClosed:
+    #                 print(s.state, " ", s.cost, " ", s.backpointer)
+    #             print("This is open: ")
+    #             for y in heapOpen:
+    #                 print(y.state, " ", y.cost, " ", y.backpointer)
+    #             break
+    #     else:
+    #         Neighbors = Graph[Current.state]
+    #         for n in Neighbors:
+    #             #There's 3 cases but only took accound for 2 so far
+    #             Temp = StateObject() #Create the StateObj for heap
+    #             #Distance from the goal + cost of moving one square
+    #             fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
+    #             # fn = heuristic(obs, Start, Goal)
+    #             Temp.state = n
+    #             Temp.cost = fn
+    #             Temp.backpointer = Current.state
+    #             if find_state(heapOpen, Temp):
+    #                 index = find_loc(heapOpen, Temp)
+    #                 if heapOpen[index].cost > fn:
+    #                     heapClosed[index].cost = fn
+    #                     heapOpen[index].backpointer = Current.state
+    #
+    #                     index = find_loc(heapClosed,Temp)
+    #                     heapClosed[index].cost = fn
+    #                     heapClosed[index].backpointer = Current.state
+    #             else:
+    #                 heapOpen.append(Temp)
+    #             heapClosed.append(Temp)
+        # print("loopdy-loop")
 
     path = []
     done = False
@@ -179,8 +200,11 @@ def A_Star(obs, location, target):
     but this will change based on where in the map we are
     since we are not always going to be at (0,0)'''
     # X,Y = target
-    # List_X = list(range(0,X + 1))
-    # List_Y = list(range(0,Y + 1))
+    # # List_X = list(range(0,X + 1))
+    # # List_Y = list(range(0,Y + 1))
+    # List_X = list(range(0,63))
+    # List_Y = list(range(0,63))
+    #
     # Points = []
     # '''Account for instance when there are more Y's than X's'''
     # for x in List_X :
@@ -197,7 +221,7 @@ def A_Star(obs, location, target):
     #     print("This is the state: ",key)
     #     print(Dic[key])
 
-    return pathfinding(obs,location,target)
+    return pathfinding(obs,location, target)
 
 
 
