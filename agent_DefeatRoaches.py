@@ -88,7 +88,7 @@ def get_state(obs):
     ai_selected = obs.observation['screen'][_AI_SELECTED]
     marine_selected = int((ai_selected == 1).any())
 
-    return (marine_selected, int(marine_on_target)), [targetxs, targetys]
+    return (marine_selected, int(marine_on_target)), [targetxs, targetys], (marinex, mariney)
 
 
 class QTable(object):
@@ -169,7 +169,7 @@ class FlankingAgent(base_agent.BaseAgent):
     def step(self, obs):
         '''Step function gets called automatically by pysc2 environment'''
         super(FlankingAgent, self).step(obs)
-        state, target_pos = get_state(obs)
+        state, target_pos, current_pos = get_state(obs)
 
         if not obs.first():
             score = obs.observation['score_cumulative'][3] + \
@@ -181,7 +181,7 @@ class FlankingAgent(base_agent.BaseAgent):
             self.qtable.save_qtable('qTable-MoveToBacon')
             self.qtable.save_states('qStates-MoveToBacon')
             np.save('sampleobs', obs)
-            pprint(obs)
+            #pprint(obs)
 
         self.prev_state = state
         action = self.qtable.get_action(state)
