@@ -11,6 +11,7 @@ import time
 from s2clientprotocol import raw_pb2 as sc_raw
 from s2clientprotocol import sc2api_pb2 as sc_pb
 from pprint import pprint
+from coordgrabber import *
 
 np.set_printoptions(suppress=True)
 
@@ -44,17 +45,22 @@ possible_actions = [
     _MOVE_MIDDLE
 ]
 
-def getTarget(obs):
-    targetxs, targetys = get_EnemyCoords(obs)
+
+
+def get_target_coords(obs):
+    # Todo: handle case when there are no enemy coordiantes
+    targetxs, targetys = get_enemy_coords(obs)
     xmax = np.argmax(targetxs)
     xmin = np.argmin(targetxs)
     ymax = np.argmax(targetys)
     ymin = np.argmin(targetys)
-    print(xmin, xmax, ymin, ymax)
-    pprint(targetxs)
-    pprint(targetys)
-    labely = (targetys[ymax]- targetys[ymin])
-    labelx = (targetxs[xmax]- targetxs[xmin])
+    # print(xmin, xmax, ymin, ymax)
+    # pprint(targetxs)
+    # pprint(targetys)
+    pprint(get_unit_types(obs, [targetxs, targetys]))
+    #Todo: transform the rectangle area to be angled
+    labely = (targetys[ymax] - targetys[ymin])
+    labelx = (targetxs[xmax] - targetxs[xmin])
     if labelx > labely:
         return targetxs[ymin], targetys[ymin]
     else:
@@ -63,28 +69,27 @@ def getTarget(obs):
 def get_eps_threshold(steps_done):
     return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
 
-def get_EnemyCoords(obs):
-    ai_view = obs.observation['screen'][_AI_RELATIVE]
-    return (ai_view == _AI_HOSTILE ).nonzero()
-
-def get_AICoords(obs):
-    ai_view = obs.observation['screen'][_AI_RELATIVE]
-    return (ai_view == _AI_SELF).nonzero()
-
-
 
 def get_state(obs):
-     ai_view = obs.observation['screen'][_AI_RELATIVE]
-     # need a better way to determine target destination, roach range is 4
-     targetxs,targetys = getTarget(obs)
-     marinexs, marineys = (ai_view == _AI_SELF).nonzero()
-     marinex, mariney = marinexs.mean(), marineys.mean()
-     marine_on_target = np.min(targetxs) <= marinex <=  np.max(targetxs) and np.min(targetys) <= mariney <=  np.max(targetys)
+    """ Takes in an observation
+        Returns a 2-tuple:
+            1st item is also a 2-tuple of boolean values indicating state
+                -- this can be changed to accomidate more states (ex searching)
+            2nd item is a 1x2 numpy array of xy coordinates to a target location
+    """
+    ai_view = obs.observation['screen'][_AI_RELATIVE]
+    # need a better way to determine target destination, roach range is 4
+    targetxs, targetys = get_target_coords(obs)
+    marinexs, marineys = (ai_view == _AI_SELF).nonzero()
+    marinex, mariney = marinexs.mean(), marineys.mean()
+    marine_on_target = np.min(targetxs) <= marinex <= np.max(
+        targetxs) and np.min(targetys) <= mariney <= np.max(targetys)
 
-     ai_selected = obs.observation['screen'][_AI_SELECTED]
-     marine_selected = int((ai_selected == 1).any())
+    ai_selected = obs.observation['screen'][_AI_SELECTED]
+    marine_selected = int((ai_selected == 1).any())
 
-     return (marine_selected, int(marine_on_target)), [targetxs, targetys]
+    return (marine_selected, int(marine_on_target)), [targetxs, targetys]
+
 
 class QTable(object):
     def __init__(self, actions, lr=0.01, reward_decay=0.9, load_qt=None, load_st=None):
@@ -100,7 +105,8 @@ class QTable(object):
         if load_qt:
             self.q_table = self.load_qtable(load_qt)
         else:
-            self.q_table = np.zeros((3, len(possible_actions))) # create a Q table
+            self.q_table = np.zeros(
+                (3, len(possible_actions)))  # create a Q table
 
     def get_action(self, state):
         if not self.load_qt and np.random.rand() < get_eps_threshold(steps):
@@ -114,7 +120,8 @@ class QTable(object):
             return int(np.argmax(q_values))
 
     def add_state(self, state):
-        self.q_table = np.vstack([self.q_table, np.zeros((1, len(possible_actions)))])
+        self.q_table = np.vstack(
+            [self.q_table, np.zeros((1, len(possible_actions)))])
         self.states_list.add(state)
 
     def update_qtable(self, state, next_state, action, reward):
@@ -147,24 +154,34 @@ class QTable(object):
     def load_states(self, filepath):
         return np.load(filepath)
 
-class Agent_DR(base_agent.BaseAgent):
+
+class FlankingAgent(base_agent.BaseAgent):
     def __init__(self, load_qt=None, load_st=None):
-        super(Agent_DR, self).__init__()
-        self.qtable = QTable(possible_actions, load_qt="qTable-MoveToBacon.npy", load_st="qStates-MoveToBacon.npy")
+        super(FlankingAgent, self).__init__()
+        if load_qt and load_st:
+            self.qtable = QTable(
+                possible_actions, load_qt="qTable-MoveToBacon.npy", load_st="qStates-MoveToBacon.npy")
+        else:
+            self.qtable = QTable(
+                possible_actions, load_qt="qTable-MoveToBacon.npy", load_st="qStates-MoveToBacon.npy")
         self.steps = 0
-    #def __del__(self):
 
     def step(self, obs):
         '''Step function gets called automatically by pysc2 environment'''
-        super(Agent_DR, self).step(obs)
+        super(FlankingAgent, self).step(obs)
         state, target_pos = get_state(obs)
 
         if not obs.first():
-            score = obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5]+obs.observation['score_cumulative'][0]
-            self.qtable.update_qtable(self.prev_state, state, self.prev_action, score)
+            score = obs.observation['score_cumulative'][3] + \
+                obs.observation['score_cumulative'][5] + \
+                obs.observation['score_cumulative'][0]
+            self.qtable.update_qtable(
+                self.prev_state, state, self.prev_action, score)
         if obs.last():
             self.qtable.save_qtable('qTable-MoveToBacon')
             self.qtable.save_states('qStates-MoveToBacon')
+            np.save('sampleobs', obs)
+            pprint(obs)
 
         self.prev_state = state
         action = self.qtable.get_action(state)
@@ -175,7 +192,8 @@ class Agent_DR(base_agent.BaseAgent):
             func = actions.FunctionCall(_NO_OP, [])
         elif state[0] and possible_actions[action] == _MOVE_SCREEN:
             target_x, target_y = target_pos[0].mean(), target_pos[1].mean()
-            func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
+            func = actions.FunctionCall(
+                _MOVE_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
         elif possible_actions[action] == _SELECT_ARMY:
             func = actions.FunctionCall(_SELECT_ARMY, [_SELECT_ALL])
         elif state[0] and possible_actions[action] == _SELECT_POINT:
@@ -183,11 +201,13 @@ class Agent_DR(base_agent.BaseAgent):
             backgroundxs, backgroundys = (ai_view == _BACKGROUND).nonzero()
             point = np.random.randint(0, len(backgroundxs))
             backgroundx, backgroundy = backgroundxs[point], backgroundys[point]
-            func = actions.FunctionCall(_SELECT_POINT, [_NOT_QUEUED, [backgroundy, backgroundx]])
+            func = actions.FunctionCall(
+                _SELECT_POINT, [_NOT_QUEUED, [backgroundy, backgroundx]])
         elif state[0] and possible_actions[action] == _MOVE_RAND:
             target_x, target_y = target_pos[0].max(), target_pos[1].max()
             #movex, movey = np.random.randint(target_x, 64), np.random.randint(target_y, 64)
-            func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
+            func = actions.FunctionCall(
+                _MOVE_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
         elif state[0] and possible_actions[action] == _MOVE_MIDDLE:
             func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [32, 32]])
         return func
