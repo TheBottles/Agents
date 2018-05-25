@@ -131,6 +131,7 @@ def pathfinding(obs, Start, Goal):
 
     shape = get_map_size(obs)
 
+    final = None
     # While 'Open' is not empty
     while len(heapOpen) > 0:
         heapq.heapify(heapOpen) #Update the heap
@@ -138,6 +139,7 @@ def pathfinding(obs, Start, Goal):
         Current.state = (int(Current.state[0]), int(Current.state[1]))
         distance_to_target = Distance_Calc (Goal[0], Goal[1], Current.state[0], Current.state[1])
         if distance_to_target <= 1:
+                final = Current
                 # print("We got the current ", Current.state)
                 # print("This is the closed:")
                 # for s in heapClosed:
@@ -156,71 +158,39 @@ def pathfinding(obs, Start, Goal):
                 #There's 3 cases but only took accound for 2 so far
                 Temp = StateObject() #Create the StateObj for heap
                 #Distance from the goal + cost of moving one square
-                fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
-                # fn = heuristic(obs, Start, Goal)
+                # fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
+                fn = heuristic(obs, Start, Goal)
                 Temp.state = n
                 Temp.cost = fn
-                Temp.backpointer = copy.deepcopy(Current)
+                Temp.backpointer = Current
                 if find_state(heapOpen, Temp):
                     index = find_loc(heapOpen, Temp)
                     if heapOpen[index].cost > fn:
                         heapClosed[index].cost = fn
-                        heapOpen[index].backpointer = copy.deepcopy(Current)
+                        heapOpen[index].backpointer = Current
 
                         index = find_loc(heapClosed,Temp)
                         heapClosed[index].cost = fn
-                        heapClosed[index].backpointer = copy.deepcopy(Current)
+                        heapClosed[index].backpointer = Current
                 else:
                     heapOpen.append(Temp)
                 heapClosed.append(Temp)
         # print("loopdy-loop")s
 
     path = []
-    # done = False
-    # X = Goal
-
-    # print(heapClosed, len(heapClosed))
-    #
-    # while done == False:
-    #     # print("done loopdy-loop")
-    #     # print(X)
-    #     if X == Start:
-    #         path.append(X)
-    #         done == True
-    #         break
-    #
-    #     for y in heapClosed:
-    #         distance_to_backpointer = Distance_Calc(X[0], X[1], y.state[0], y.state[1]) + 1
-    #         # print(distance_to_backpointer)
-    #         if X == y.state:
-    #             path.append(y.state)
-    #             X = y.backpointer
-    #             # print("Going backward")
-    #             break
-
-    for point in heapClosed:
-        distance_to_target = Distance_Calc(Goal[0], Goal[1], point.state[0], point.state[1]) + 1
-        if distance_to_target <= 5:
-            current = point
-            # print(current)
-            # print("Found the start")
-            distance_to_target = Distance_Calc(Goal[0], Goal[1], point.state[0], point.state[1]) + 1
-            while current:
-                path.append(current.state)
-                current = current.backpointer
-                # print(current)
-            # print("Reached end")
-            break
 
 
-
-    # print("Finished")
-    # print(path)
+    current = final
+    while current:
+        path.append(current.state)
+        current = current.backpointer
 
     try:
         return path[-15]
     except IndexError:
         return Goal
+
+
 '''For this algorithm we start at a "start" point and a "finish" point.
 We then make a dictionary that represents the "graph" that is the map.
 Each key in the dictionary is a tuple that represents a point and the value
