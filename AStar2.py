@@ -4,6 +4,7 @@ import heapq
 from coordgrabber import *
 import numpy as np
 # from math import round
+import copy
 
 '''Script to implement A* algorithm for path from one point
 in X/Y plane to the other point'''
@@ -13,7 +14,7 @@ class StateObject:
     def __init__(self):
         self.state = ()
         self.cost = 0
-        self.backpointer = ()
+        self.backpointer = None
     def __lt__(self,other):
         return self.cost < other.cost
     def __cmp__(self,other):
@@ -123,7 +124,7 @@ def pathfinding(obs, Start, Goal):
     Temp = StateObject()
     Temp.state = Start
     Temp.cost = Distance_Calc(Goal[0], Goal[1], Start[0], Start[1]) + 1
-    Temp.backpointer = Start
+    Temp.backpointer = None
     heapOpen.append(Temp)
     heapq.heapify(heapOpen)
     explored = set()
@@ -137,13 +138,13 @@ def pathfinding(obs, Start, Goal):
         Current.state = (int(Current.state[0]), int(Current.state[1]))
         distance_to_target = Distance_Calc (Goal[0], Goal[1], Current.state[0], Current.state[1])
         if distance_to_target <= 1:
-                print("We got the current ", Current.state)
-                print("This is the closed:")
-                for s in heapClosed:
-                    print("    ", s.state, " ", s.cost, " ", s.backpointer)
-                print("This is open: ")
-                for y in heapOpen:
-                    print("    ", y.state, " ", y.cost, " ", y.backpointer)
+                # print("We got the current ", Current.state)
+                # print("This is the closed:")
+                # for s in heapClosed:
+                #     print("    ", s.state, " ", s.cost, " ", s.backpointer)
+                # print("This is open: ")
+                # for y in heapOpen:
+                #     print("    ", y.state, " ", y.cost, " ", y.backpointer)
                 break
         else:
             # print(distance_to_target)
@@ -159,16 +160,16 @@ def pathfinding(obs, Start, Goal):
                 # fn = heuristic(obs, Start, Goal)
                 Temp.state = n
                 Temp.cost = fn
-                Temp.backpointer = Current.state
+                Temp.backpointer = copy.deepcopy(Current)
                 if find_state(heapOpen, Temp):
                     index = find_loc(heapOpen, Temp)
                     if heapOpen[index].cost > fn:
                         heapClosed[index].cost = fn
-                        heapOpen[index].backpointer = Current.state
+                        heapOpen[index].backpointer = copy.deepcopy(Current)
 
                         index = find_loc(heapClosed,Temp)
                         heapClosed[index].cost = fn
-                        heapClosed[index].backpointer = Current.state
+                        heapClosed[index].backpointer = copy.deepcopy(Current)
                 else:
                     heapOpen.append(Temp)
                 heapClosed.append(Temp)
@@ -201,26 +202,25 @@ def pathfinding(obs, Start, Goal):
         distance_to_target = Distance_Calc(Goal[0], Goal[1], point.state[0], point.state[1]) + 1
         if distance_to_target <= 5:
             current = point
-            print(current)
-            print("Found the start")
+            # print(current)
+            # print("Found the start")
             distance_to_target = Distance_Calc(Goal[0], Goal[1], point.state[0], point.state[1]) + 1
-            while current.state != Start:
+            while current:
                 path.append(current.state)
                 current = current.backpointer
-                print(current)
-            print("Reached end")
+                # print(current)
+            # print("Reached end")
             break
 
 
 
-    print("Finished")
-    print(path)
+    # print("Finished")
+    # print(path)
 
     try:
         return path[-15]
     except IndexError:
-        return path[-1]
-
+        return Goal
 '''For this algorithm we start at a "start" point and a "finish" point.
 We then make a dictionary that represents the "graph" that is the map.
 Each key in the dictionary is a tuple that represents a point and the value
