@@ -22,6 +22,8 @@ class StateObject:
         if isinstance(self, other.__class__):
             return self.__dict__ == other.__dict__
         return False
+    def __str__(self):
+        return "%s" % (str(self.state))
 
 
 def Point_Distance(Point_List, Goal_X, Goal_Y):
@@ -135,14 +137,20 @@ def pathfinding(obs, Start, Goal):
         Current.state = (int(Current.state[0]), int(Current.state[1]))
         distance_to_target = Distance_Calc (Goal[0], Goal[1], Current.state[0], Current.state[1])
         if distance_to_target <= 1:
-                print("We found a path to target")
+                print("We got the current ", Current.state)
+                print("This is the closed:")
+                for s in heapClosed:
+                    print("    ", s.state, " ", s.cost, " ", s.backpointer)
+                print("This is open: ")
+                for y in heapOpen:
+                    print("    ", y.state, " ", y.cost, " ", y.backpointer)
                 break
         else:
-            print(distance_to_target)
+            # print(distance_to_target)
             Neighbors = Graph(Current.state, shape)
-            print("Current Location: " + str(Current.state))
-            print(Neighbors)
-            print("Target Location: " + str(Goal))
+            # print("Current Location: " + str(Current.state))
+            # print(Neighbors)
+            # print("Target Location: " + str(Goal))
             for n in Neighbors:
                 #There's 3 cases but only took accound for 2 so far
                 Temp = StateObject() #Create the StateObj for heap
@@ -164,27 +172,46 @@ def pathfinding(obs, Start, Goal):
                 else:
                     heapOpen.append(Temp)
                 heapClosed.append(Temp)
-        print("loopdy-loop")
+        # print("loopdy-loop")s
 
     path = []
-    done = False
-    X = Goal
-    while done == False:
-        print("done loopdy-loop")
-        print(X)
-        if X == Start:
-            path.append(X)
-            done == True
+    # done = False
+    # X = Goal
+
+    # print(heapClosed, len(heapClosed))
+    #
+    # while done == False:
+    #     # print("done loopdy-loop")
+    #     # print(X)
+    #     if X == Start:
+    #         path.append(X)
+    #         done == True
+    #         break
+    #
+    #     for y in heapClosed:
+    #         distance_to_backpointer = Distance_Calc(X[0], X[1], y.state[0], y.state[1]) + 1
+    #         # print(distance_to_backpointer)
+    #         if X == y.state:
+    #             path.append(y.state)
+    #             X = y.backpointer
+    #             # print("Going backward")
+    #             break
+
+    for point in heapClosed:
+        distance_to_target = Distance_Calc(Goal[0], Goal[1], point.state[0], point.state[1]) + 1
+        if distance_to_target <= 5:
+            current = point
+            print(current)
+            print("Found the start")
+            distance_to_target = Distance_Calc(Goal[0], Goal[1], point.state[0], point.state[1]) + 1
+            while current.state != Start:
+                path.append(current.state)
+                current = current.backpointer
+                print(current)
+            print("Reached end")
             break
 
-        for y in heapClosed:
-            distance_to_backpointer = Distance_Calc(X[0], X[1], y.state[0], y.state[1]) + 1
-            print(distance_to_backpointer)
-            if distance_to_backpointer < 5:
-                path.append(y.state)
-                X = y.backpointer
-                print("Going backward")
-                break
+
 
     print("Finished")
     print(path)
