@@ -86,13 +86,13 @@ def heuristic(obs, location, target):
     return NUM_HOSTILE + TARGET_DISTANCE + ENEMY_DISTANCE
 
 "Converts an (x,y) coordinate to neighbor coordinates"
-def Graph(location):
+def Graph(location, shape):
     x,y = location
     thresh = 1
     neighbors = [(x-thresh, y-thresh),  (x-thresh, y), (x-thresh, y+thresh), (x, y-thresh), (x+thresh, y-thresh), (x+thresh,y-thresh), (x+thresh, y), (x+thresh, y+thresh)]
     goto = []
     for n in neighbors:
-        if ( n[0] < 0  ) or ( n[0] >= 64) or ( n[1] < 0 ) or (n[1] >= 64):
+        if ( n[0] < 0  ) or ( n[0] >= shape[0]) or ( n[1] < 0 ) or (n[1] >= shape[1]):
             continue
         goto.append(n)
     # explored.update(set(goto))
@@ -126,25 +126,20 @@ def pathfinding(obs, Start, Goal):
     heapq.heapify(heapOpen)
     explored = set()
 
+    shape = get_map_size(obs)
+
     # While 'Open' is not empty
     while len(heapOpen) > 0:
         heapq.heapify(heapOpen) #Update the heap
         Current = heapq.heappop(heapOpen)
         Current.state = (int(Current.state[0]), int(Current.state[1]))
         distance_to_target = Distance_Calc (Goal[0], Goal[1], Current.state[0], Current.state[1])
-        if distance_to_target < 5:
-                # print("We got the current ", Current.state)
-                # print("This is the closed:")
-                # for s in heapClosed:
-                #     print(s.state, " ", s.cost, " ", s.backpointer)
-                # print("This is open: ")
-                # for y in heapOpen:
-                #     print(y.state, " ", y.cost, " ", y.backpointer)
+        if distance_to_target <= 1:
                 print("We found a path to target")
                 break
         else:
             print(distance_to_target)
-            Neighbors = Graph(Current.state)
+            Neighbors = Graph(Current.state, shape)
             print("Current Location: " + str(Current.state))
             print(Neighbors)
             print("Target Location: " + str(Goal))
@@ -176,14 +171,19 @@ def pathfinding(obs, Start, Goal):
     X = Goal
     while done == False:
         print("done loopdy-loop")
+        print(X)
         if X == Start:
             path.append(X)
             done == True
             break
+
         for y in heapClosed:
-            if y.state == X:
+            distance_to_backpointer = Distance_Calc(X[0], X[1], y.state[0], y.state[1]) + 1
+            print(distance_to_backpointer)
+            if distance_to_backpointer < 5:
                 path.append(y.state)
                 X = y.backpointer
+                print("Going backward")
                 break
 
     print("Finished")

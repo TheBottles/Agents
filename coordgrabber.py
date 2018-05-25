@@ -34,3 +34,10 @@ def get_num_enemies(obs):
     """
     ai_view = obs.observation['screen'][_AI_RELATIVE]
     return np.count_nonzero((ai_view == _AI_HOSTILE).nonzero())
+
+def get_map_size(obs):
+    """ Takes in an observation
+        Returns the size of the map in a tuple
+    """
+    ai_view = obs.observation['screen'][_AI_RELATIVE]
+    return ai_view.shape
