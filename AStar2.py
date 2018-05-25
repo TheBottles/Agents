@@ -88,7 +88,7 @@ def heuristic(obs, location, target):
 "Converts an (x,y) coordinate to neighbor coordinates"
 def Graph(location):
     x,y = location
-    thresh = 15
+    thresh = 1
     neighbors = [(x-thresh, y-thresh),  (x-thresh, y), (x-thresh, y+thresh), (x, y-thresh), (x+thresh, y-thresh), (x+thresh,y-thresh), (x+thresh, y), (x+thresh, y+thresh)]
     goto = []
     for n in neighbors:
@@ -102,93 +102,97 @@ def Graph(location):
 '''A* implementation using the class slides'''
 def pathfinding(obs, Start, Goal):
 
-    neighbors = Graph(Start)
-    bestn = (0,0)
-    bestscore = np.inf
-    for n in neighbors:
-        fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
-        if fn < bestscore:
-            print(fn, "is better than", bestscore)
-            bestn = n
-            bestscore = fn
-        print(bestscore)
-    return bestn
+    # neighbors = Graph(Start)
+    # bestn = (0,0)
+    # bestscore = np.inf
+    # for n in neighbors:
+    #     fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
+    #     if fn < bestscore:
+    #         print(fn, "is better than", bestscore)
+    #         bestn = n
+    #         bestscore = fn
+    #     print(bestscore)
+    # return bestn
 
 
     #Now we do all the agorithm here
-    # heapOpen = []
-    # heapClosed = []
-    # Temp = StateObject()
-    # Temp.state = Start
-    # Temp.cost = Distance_Calc(Goal[0], Goal[1], Start[0], Start[1]) + 1
-    # Temp.backpointer = Start
-    # heapOpen.append(Temp)
-    # heapq.heapify(heapOpen)
-    # explored = set()
-    #
-    # # While 'Open' is not empty
-    # while len(heapOpen) > 0:
-    #     heapq.heapify(heapOpen) #Update the heap
-    #     Current = heapq.heappop(heapOpen)
-    #     Current.state = (int(Current.state[0]), int(Current.state[1]))
-    #     if Current.state == Goal:
-    #             print("We got the current ", Current.state)
-    #             print("This is the closed:")
-    #             for s in heapClosed:
-    #                 print(s.state, " ", s.cost, " ", s.backpointer)
-    #             print("This is open: ")
-    #             for y in heapOpen:
-    #                 print(y.state, " ", y.cost, " ", y.backpointer)
-    #             break
-    #     else:
-    #         Neighbors = Graph(Current.state)
-    #         print(Current.state)
-    #         print(Neighbors)
-    #         print(Goal)
-    #         for n in Neighbors:
-    #             #There's 3 cases but only took accound for 2 so far
-    #             Temp = StateObject() #Create the StateObj for heap
-    #             #Distance from the goal + cost of moving one square
-    #             fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
-    #             # fn = heuristic(obs, Start, Goal)
-    #             Temp.state = n
-    #             Temp.cost = fn
-    #             Temp.backpointer = Current.state
-    #             if find_state(heapOpen, Temp):
-    #                 index = find_loc(heapOpen, Temp)
-    #                 if heapOpen[index].cost > fn:
-    #                     heapClosed[index].cost = fn
-    #                     heapOpen[index].backpointer = Current.state
-    #
-    #                     index = find_loc(heapClosed,Temp)
-    #                     heapClosed[index].cost = fn
-    #                     heapClosed[index].backpointer = Current.state
-    #             else:
-    #                 heapOpen.append(Temp)
-    #             heapClosed.append(Temp)
-    #     print("loopdy-loop")
-    #
-    # path = []
-    # done = False
-    # X = Goal
-    # while done == False:
-    #     if X == Start:
-    #         path.append(X)
-    #         done == True
-    #         break
-    #     for y in heapClosed:
-    #         if y.state == X:
-    #             path.append(y.state)
-    #             X = y.backpointer
-    #             break
-    #
-    # print("Finished")
-    # print(path)
-    #
-    # try:
-    #     return path[-15]
-    # except IndexError:
-    #     return path[-1]
+    heapOpen = []
+    heapClosed = []
+    Temp = StateObject()
+    Temp.state = Start
+    Temp.cost = Distance_Calc(Goal[0], Goal[1], Start[0], Start[1]) + 1
+    Temp.backpointer = Start
+    heapOpen.append(Temp)
+    heapq.heapify(heapOpen)
+    explored = set()
+
+    # While 'Open' is not empty
+    while len(heapOpen) > 0:
+        heapq.heapify(heapOpen) #Update the heap
+        Current = heapq.heappop(heapOpen)
+        Current.state = (int(Current.state[0]), int(Current.state[1]))
+        distance_to_target = Distance_Calc (Goal[0], Goal[1], Current.state[0], Current.state[1])
+        if distance_to_target < 5:
+                # print("We got the current ", Current.state)
+                # print("This is the closed:")
+                # for s in heapClosed:
+                #     print(s.state, " ", s.cost, " ", s.backpointer)
+                # print("This is open: ")
+                # for y in heapOpen:
+                #     print(y.state, " ", y.cost, " ", y.backpointer)
+                print("We found a path to target")
+                break
+        else:
+            print(distance_to_target)
+            Neighbors = Graph(Current.state)
+            print("Current Location: " + str(Current.state))
+            print(Neighbors)
+            print("Target Location: " + str(Goal))
+            for n in Neighbors:
+                #There's 3 cases but only took accound for 2 so far
+                Temp = StateObject() #Create the StateObj for heap
+                #Distance from the goal + cost of moving one square
+                fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
+                # fn = heuristic(obs, Start, Goal)
+                Temp.state = n
+                Temp.cost = fn
+                Temp.backpointer = Current.state
+                if find_state(heapOpen, Temp):
+                    index = find_loc(heapOpen, Temp)
+                    if heapOpen[index].cost > fn:
+                        heapClosed[index].cost = fn
+                        heapOpen[index].backpointer = Current.state
+
+                        index = find_loc(heapClosed,Temp)
+                        heapClosed[index].cost = fn
+                        heapClosed[index].backpointer = Current.state
+                else:
+                    heapOpen.append(Temp)
+                heapClosed.append(Temp)
+        print("loopdy-loop")
+
+    path = []
+    done = False
+    X = Goal
+    while done == False:
+        print("done loopdy-loop")
+        if X == Start:
+            path.append(X)
+            done == True
+            break
+        for y in heapClosed:
+            if y.state == X:
+                path.append(y.state)
+                X = y.backpointer
+                break
+
+    print("Finished")
+    print(path)
+
+    try:
+        return path[-15]
+    except IndexError:
+        return path[-1]
 
 '''For this algorithm we start at a "start" point and a "finish" point.
 We then make a dictionary that represents the "graph" that is the map.
