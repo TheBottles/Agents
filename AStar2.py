@@ -26,17 +26,7 @@ class StateObject:
     def __str__(self):
         return "%s" % (str(self.state))
 
-
-def Point_Distance(Point_List, Goal_X, Goal_Y):
-    dist = [0] * len(Point_List)
-    j = 0
-    for P in Point_List:
-        Result = Distance_Calc(Goal_X, Goal_Y, P[0], P[1])
-        dist[j] = Result
-        j= j + 1
-    return dist
-
-'''Distanc from any point to our goal coordinates'''
+'''Distance from any point to our goal coordinates'''
 def Distance_Calc(X_Goal, Y_Goal, X, Y):
     X_Distance = math.pow((X_Goal - X), 2)
     Y_Distance = math.pow((Y_Goal - Y), 2)
@@ -71,7 +61,6 @@ def find_loc(StateList, Atom):
         if StateList[i].state == Atom:
             break
         i += 1
-
     return i
 
 def heuristic(obs, location, target):
@@ -86,12 +75,13 @@ def heuristic(obs, location, target):
     X_Enemy, Y_Enemy = Enemy_Locations[0].mean(), Enemy_Locations[1].mean()
     ENEMY_DISTANCE = Distance_Calc(X_Enemy, Y_Enemy, X, Y)
 
-    return NUM_HOSTILE + TARGET_DISTANCE + ENEMY_DISTANCE
+    print( "%5.2f %5.2f" % (TARGET_DISTANCE, ENEMY_DISTANCE * .5))
+    return NUM_HOSTILE + TARGET_DISTANCE - (ENEMY_DISTANCE * .5)
 
 "Converts an (x,y) coordinate to neighbor coordinates"
 def Graph(location, shape):
     x,y = location
-    thresh = 1
+    thresh = 5
     neighbors = [(x-thresh, y-thresh),  (x-thresh, y), (x-thresh, y+thresh), (x, y-thresh), (x+thresh, y-thresh), (x+thresh,y-thresh), (x+thresh, y), (x+thresh, y+thresh)]
     goto = []
     for n in neighbors:
@@ -104,19 +94,6 @@ def Graph(location, shape):
 
 '''A* implementation using the class slides'''
 def pathfinding(obs, Start, Goal):
-
-    # neighbors = Graph(Start)
-    # bestn = (0,0)
-    # bestscore = np.inf
-    # for n in neighbors:
-    #     fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
-    #     if fn < bestscore:
-    #         print(fn, "is better than", bestscore)
-    #         bestn = n
-    #         bestscore = fn
-    #     print(bestscore)
-    # return bestn
-
 
     #Now we do all the agorithm here
     heapOpen = []
@@ -138,8 +115,11 @@ def pathfinding(obs, Start, Goal):
         Current = heapq.heappop(heapOpen)
         Current.state = (int(Current.state[0]), int(Current.state[1]))
         distance_to_target = Distance_Calc (Goal[0], Goal[1], Current.state[0], Current.state[1])
-        if distance_to_target <= 1:
-                final = Current
+        if distance_to_target <= 15:
+                final = StateObject()
+                final.state = Goal
+                final.cost = 0
+                final.backpointer = Current
                 # print("We got the current ", Current.state)
                 # print("This is the closed:")
                 # for s in heapClosed:
@@ -149,17 +129,14 @@ def pathfinding(obs, Start, Goal):
                 #     print("    ", y.state, " ", y.cost, " ", y.backpointer)
                 break
         else:
-            # print(distance_to_target)
             Neighbors = Graph(Current.state, shape)
-            # print("Current Location: " + str(Current.state))
-            # print(Neighbors)
-            # print("Target Location: " + str(Goal))
             for n in Neighbors:
                 #There's 3 cases but only took accound for 2 so far
                 Temp = StateObject() #Create the StateObj for heap
                 #Distance from the goal + cost of moving one square
                 # fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
-                fn = heuristic(obs, Start, Goal)
+                fn = heuristic(obs, n, Goal)
+                print(fn)
                 Temp.state = n
                 Temp.cost = fn
                 Temp.backpointer = Current
@@ -186,7 +163,7 @@ def pathfinding(obs, Start, Goal):
         current = current.backpointer
 
     try:
-        return path[-15]
+        return path[-3]
     except IndexError:
         return Goal
 

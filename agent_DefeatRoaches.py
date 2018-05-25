@@ -12,7 +12,7 @@ from s2clientprotocol import raw_pb2 as sc_raw
 from s2clientprotocol import sc2api_pb2 as sc_pb
 from pprint import pprint
 from coordgrabber import *
-from AStar2 import *
+from AStar2 import A_Star
 
 np.set_printoptions(suppress=True)
 
@@ -51,6 +51,11 @@ possible_actions = [
 def get_target_coords(obs):
     # Todo: handle case when there are no enemy coordiantes
     targetxs, targetys = get_enemy_coords(obs)
+    selfxs, selfys = get_self_coords(obs)
+    selfx = selfxs.mean()
+    selfy = selfys.mean()
+    loc = (selfx, selfy)
+
     xmax = np.argmax(targetxs)
     xmin = np.argmin(targetxs)
     ymax = np.argmax(targetys)
@@ -62,10 +67,15 @@ def get_target_coords(obs):
     #Todo: transform the rectangle area to be angled
     labely = (targetys[ymax] - targetys[ymin])
     labelx = (targetxs[xmax] - targetxs[xmin])
+
     if labelx > labely:
-        return targetxs[ymin], targetys[ymin]
+        if Distance_Calc(loc, (targetxs[ymin], targetys[ymin])) < Distance_Calc(loc, (targetxs[ymax], targetys[ymax])):
+            return targetxs[ymin], targetys[ymin]
+        else: return targetxs[ymax], targetys[ymax]
     else:
-        return targetxs[xmin], targetys[xmin]
+        if Distance_Calc(loc, (targetxs[xmin], targetys[xmin])) < Distance_Calc(loc, (targetxs[xmax], targetys[xmax])):
+            return targetxs[xmin], targetys[xmin]
+        else: return targetxs[xmax], targetys[xmax]
 
 def get_eps_threshold(steps_done):
     return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)

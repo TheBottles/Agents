@@ -2,6 +2,7 @@
 import numpy as np
 from pysc2.lib import features
 from pprint import pprint
+import math
 
 _AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _UNIT_TYPE = features.SCREEN_FEATURES.unit_type.index
@@ -41,3 +42,10 @@ def get_map_size(obs):
     """
     ai_view = obs.observation['screen'][_AI_RELATIVE]
     return ai_view.shape
+
+'''Distance from any point to our goal coordinates'''
+def Distance_Calc(loc1, loc2):
+    X_Distance = math.pow((loc1[0] - loc2[0]), 2)
+    Y_Distance = math.pow((loc1[1] - loc2[1]), 2)
+    Final = math.sqrt(X_Distance + Y_Distance)
+    return Final
