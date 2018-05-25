@@ -14,6 +14,8 @@ from pprint import pprint
 from coordgrabber import *
 from AStar2 import A_Star
 
+from singleunitselection import count_group_clusters
+
 np.set_printoptions(suppress=True)
 
 _AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
@@ -198,6 +200,8 @@ class FlankingAgent(base_agent.BaseAgent):
         action = self.qtable.get_action(state)
         self.prev_action = action
         func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target_pos])
+
+        print(count_group_clusters(obs))
 
         if possible_actions[action] == _NO_OP:
             func = actions.FunctionCall(_NO_OP, [])
