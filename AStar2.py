@@ -75,7 +75,7 @@ def heuristic(obs, location, target):
     X_Enemy, Y_Enemy = Enemy_Locations[0].mean(), Enemy_Locations[1].mean()
     ENEMY_DISTANCE = Distance_Calc(X_Enemy, Y_Enemy, X, Y)
 
-    print( "%5.2f %5.2f" % (TARGET_DISTANCE, ENEMY_DISTANCE * .5))
+    # print( "%5.2f %5.2f" % (TARGET_DISTANCE, ENEMY_DISTANCE * .5))
     return NUM_HOSTILE + TARGET_DISTANCE - (ENEMY_DISTANCE * .5)
 
 "Converts an (x,y) coordinate to neighbor coordinates"
@@ -136,7 +136,7 @@ def pathfinding(obs, Start, Goal):
                 #Distance from the goal + cost of moving one square
                 # fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
                 fn = heuristic(obs, n, Goal)
-                print(fn)
+                # print(fn)
                 Temp.state = n
                 Temp.cost = fn
                 Temp.backpointer = Current
