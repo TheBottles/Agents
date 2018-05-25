@@ -115,8 +115,6 @@ def pathfinding(obs, Start, Goal):
     return bestn
 
 
-
-
     #Now we do all the agorithm here
     # heapOpen = []
     # heapClosed = []
@@ -127,8 +125,8 @@ def pathfinding(obs, Start, Goal):
     # heapOpen.append(Temp)
     # heapq.heapify(heapOpen)
     # explored = set()
-
-    #While 'Open' is not empty
+    #
+    # # While 'Open' is not empty
     # while len(heapOpen) > 0:
     #     heapq.heapify(heapOpen) #Update the heap
     #     Current = heapq.heappop(heapOpen)
@@ -143,7 +141,10 @@ def pathfinding(obs, Start, Goal):
     #                 print(y.state, " ", y.cost, " ", y.backpointer)
     #             break
     #     else:
-    #         Neighbors = Graph[Current.state]
+    #         Neighbors = Graph(Current.state)
+    #         print(Current.state)
+    #         print(Neighbors)
+    #         print(Goal)
     #         for n in Neighbors:
     #             #There's 3 cases but only took accound for 2 so far
     #             Temp = StateObject() #Create the StateObj for heap
@@ -165,29 +166,29 @@ def pathfinding(obs, Start, Goal):
     #             else:
     #                 heapOpen.append(Temp)
     #             heapClosed.append(Temp)
-        # print("loopdy-loop")
-
-    path = []
-    done = False
-    X = Goal
-    while done == False:
-        if X == Start:
-            path.append(X)
-            done == True
-            break
-        for y in heapClosed:
-            if y.state == X:
-                path.append(y.state)
-                X = y.backpointer
-                break
-
-    print("Finished")
-    print(path)
-
-    try:
-        return path[-5]
-    except IndexError:
-        return path[0]
+    #     print("loopdy-loop")
+    #
+    # path = []
+    # done = False
+    # X = Goal
+    # while done == False:
+    #     if X == Start:
+    #         path.append(X)
+    #         done == True
+    #         break
+    #     for y in heapClosed:
+    #         if y.state == X:
+    #             path.append(y.state)
+    #             X = y.backpointer
+    #             break
+    #
+    # print("Finished")
+    # print(path)
+    #
+    # try:
+    #     return path[-15]
+    # except IndexError:
+    #     return path[-1]
 
 '''For this algorithm we start at a "start" point and a "finish" point.
 We then make a dictionary that represents the "graph" that is the map.
