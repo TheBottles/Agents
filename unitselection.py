@@ -44,6 +44,12 @@ def gen_coorinates(units):
         coors[1].append(unit[13])
     return np.array(coors)
 
+
+""" shortcut for getting unit coordinates of an alliance """
+def get_unit_coors(units, alliance):
+    return gen_coordinates(get_alliance_units(units, alliance))
+
+
 # """ Defines clusters within a map relative to the AI """
 # def count_group_clusters(obs, who = _AI_SELF):
 #     unit_graph = obs.observation['screen'][_AI_RELATIVE]
