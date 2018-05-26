@@ -26,7 +26,6 @@ _AI_SELF = 1
 
 """ takes in an observation and returns the units as an array """
 def get_units(obs):
-    print(obs.observation['feature_units'][0])
     return obs.observation['feature_units']
 
 """
@@ -37,7 +36,7 @@ def get_alliance_units(units, alliance):
     return [ unit for unit in units if unit[1] == alliance]
 
 """ takes in an array of units and returns a 2xn array of coordinates"""
-def gen_coorinates(units):
+def gen_coordinates(units):
     coors = [[],[]]
     for unit in units:
         coors[0].append(unit[12])
