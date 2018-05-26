@@ -52,7 +52,7 @@ possible_actions = [
 
 def get_target_coords(obs):
     # Todo: handle case when there are no enemy coordiantes
-    targetxs, targetys = get_enemy_coords(obs)
+    targetxs, targetys = get_unit_coors(obs, _AI_HOSTILE)
     selfxs, selfys = get_self_coords(obs)
     selfx = selfxs.mean()
     selfy = selfys.mean()
