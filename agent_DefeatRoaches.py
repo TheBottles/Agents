@@ -93,7 +93,8 @@ def get_state(obs):
     ai_view = obs.observation['screen'][_AI_RELATIVE]
     # need a better way to determine target destination, roach range is 4
     targetxs, targetys = get_target_coords(obs)
-    marinexs, marineys = (ai_view == _AI_SELF).nonzero()
+    screen_features = get_units(obs)
+    marinexs, marineys = get_unit_coords(screen_features, 1)
     marinex, mariney = marinexs.mean(), marineys.mean()
     marine_on_target = np.min(targetxs) <= marinex <= np.max(
         targetxs) and np.min(targetys) <= mariney <= np.max(targetys)
