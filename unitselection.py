@@ -24,25 +24,45 @@ _AI_SELF = 1
 #
 #     kmeans = KMeans(n_clusters = num_pixels / unit_pixels)
 
-""" Defines clusters within a map relative to the AI """
-def count_group_clusters(obs, who = _AI_SELF):
-    unit_graph = obs.observation['screen'][_AI_RELATIVE]
-    units = np.array((unit_graph == who).nonzero())
-    if np.any(units[0]):
-        thresh = 10 # this should translate to 10 pixels
-        clusters = hcluster.fclusterdata(units.T, thresh, criterion = 'distance')
-        cluster_sets = set(clusters)
-        num_clusters = len(set(clusters))
-        return num_clusters, cluster_sets, clusters, len(units[0])
-    else:
-        return 0, 0, 0, 0
+""" takes in an observation and returns the units as an array """
+def get_units(obs):
+    print(obs.observation['feature_units'][0])
+    return obs.observation['feature_units']
 
-""" Splits a cluster into two, either vertically or horizontally """
-def group_splitter(cluster, axis = 0):
-    group1 = []
-    group2 = []
-    horizontal_split = cluster[axis].mean()
-    for point in cluster:
-        if point[axis] < horizontal_split: group1.append(point)
-        else: group2.append(point)
-    return group1, group2
+"""
+    get_alliance_units takes in an array of feature units and the alliance number
+    and returns the units which have the target alliance.
+"""
+def get_alliance_units(units, alliance):
+    return [ unit for unit in units if unit[1] == alliance]
+
+""" takes in an array of units and returns a 2xn array of coordinates"""
+def gen_coorinates(units):
+    coors = [[],[]]
+    for unit in units:
+        coors[0].append(unit[12])
+        coors[1].append(unit[13])
+    return np.array(coors)
+
+# """ Defines clusters within a map relative to the AI """
+# def count_group_clusters(obs, who = _AI_SELF):
+#     unit_graph = obs.observation['screen'][_AI_RELATIVE]
+#     units = np.array((unit_graph == who).nonzero())
+#     if np.any(units[0]):
+#         thresh = 10 # this should translate to 10 pixels
+#         clusters = hcluster.fclusterdata(units.T, thresh, criterion = 'distance')
+#         cluster_sets = set(clusters)
+#         num_clusters = len(set(clusters))
+#         return num_clusters, cluster_sets, clusters, len(units[0])
+#     else:
+#         return 0, 0, 0, 0
+#
+# """ Splits a cluster into two, either vertically or horizontally """
+# def group_splitter(cluster, axis = 0):
+#     group1 = []
+#     group2 = []
+#     horizontal_split = cluster[axis].mean()
+#     for point in cluster:
+#         if point[axis] < horizontal_split: group1.append(point)
+#         else: group2.append(point)
+#     return group1, group2
