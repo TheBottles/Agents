@@ -14,7 +14,7 @@ from pprint import pprint
 from coordgrabber import *
 from AStar2 import A_Star
 
-from singleunitselection import count_group_clusters
+from unitselection import count_group_clusters
 
 np.set_printoptions(suppress=True)
 
