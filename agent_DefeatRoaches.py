@@ -20,7 +20,8 @@ np.set_printoptions(suppress=True)
 _AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _AI_SELECTED = features.SCREEN_FEATURES.selected.index
 _NO_OP = actions.FUNCTIONS.no_op.id
-_MOVE_SCREEN = actions.FUNCTIONS.Attack_screen.id
+_ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
+_MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
 _SELECT_ARMY = actions.FUNCTIONS.select_army.id
 _SELECT_POINT = actions.FUNCTIONS.select_point.id
 _MOVE_RAND = 1000
@@ -42,9 +43,10 @@ possible_actions = [
     _NO_OP,
     _SELECT_ARMY,
     _SELECT_POINT,
-    _MOVE_SCREEN,
+    _ATTACK_SCREEN,
     _MOVE_RAND,
-    _MOVE_MIDDLE
+    _MOVE_MIDDLE,
+    _MOVE_SCREEN
 ]
 
 
@@ -92,7 +94,8 @@ def get_state(obs):
     marinex, mariney = marinexs.mean(), marineys.mean()
     marine_on_target = np.min(targetxs) <= marinex <= np.max(
         targetxs) and np.min(targetys) <= mariney <= np.max(targetys)
-    return (0, int(marine_on_target)), [targetxs, targetys], (marinex, mariney)
+    enemy = bool(get_alliance_units(screen_features, _AI_HOSTILE))
+    return (enemy, int(marine_on_target)), [targetxs, targetys], (marinex, mariney)
 
 
 class QTable(object):
@@ -112,10 +115,14 @@ class QTable(object):
             self.q_table = np.zeros(
                 (3, len(possible_actions)))  # create a Q table
 
-    def get_action(self, state):
+    def get_action(self, state, allowed_actions):
+        actions = list(set(possible_actions).intersection(allowed_actions))
+        print(possible_actions)
+        print(allowed_actions)
+        print(actions)
         if not self.load_qt and np.random.rand() < get_eps_threshold(steps):
             # currently arbitrarily picks an action if the state does not already exist
-            return np.random.randint(0, len(self.actions))
+            return np.random.randint(0, len(actions))
         else:
             if state not in self.states_list:
                 self.add_state(state)
@@ -166,11 +173,11 @@ class FlankingAgent(base_agent.BaseAgent):
             self.qtable = QTable(
                 possible_actions, load_qt="qTable-moveToBacon.npy", load_st="qStates-moveToBacon.npy")
         else:
-            self.qtable = QTable(
-                possible_actions, load_qt="qTable-moveToBacon.npy", load_st="qStates-moveToBacon.npy")
+            self.qtable = QTable(possible_actions)
         self.steps = 0
 
     def step(self, obs):
+
         '''Step function gets called automatically by pysc2 environment'''
         super(FlankingAgent, self).step(obs)
         state, target_pos, current_pos = get_state(obs)
@@ -181,37 +188,54 @@ class FlankingAgent(base_agent.BaseAgent):
                 obs.observation['score_cumulative'][0]
             self.qtable.update_qtable(
                 self.prev_state, state, self.prev_action, score)
+            # pprint(obs)
+            # exit()
         if obs.last():
-            self.qtable.save_qtable('qTable-moveToBacon')
-            self.qtable.save_states('qStates-moveToBacon')
+            self.qtable.save_qtable('qTable')
+            self.qtable.save_states('qStates')
             np.save('sampleobs', obs)
+
+
+        # pprint(obs.observation)
             #pprint(obs)
 
         self.prev_state = state
-        action = self.qtable.get_action(state)
+        action = self.qtable.get_action(state, obs.observation['available_actions'])
         self.prev_action = action
-        func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, target_pos])
-
-        if possible_actions[action] == _NO_OP:
+        func = actions.FunctionCall(_NO_OP, [])
+        units = get_units(obs)
+        if possible_actions[action] == _NO_OP or possible_actions[action] == _MOVE_SCREEN:
+            print("_NO_OP")
             func = actions.FunctionCall(_NO_OP, [])
         elif state[0] and possible_actions[action] == _MOVE_RAND:
+            print("_MOVE_RAND")
             target_x, target_y = target_pos[0].max(), target_pos[1].max()
             func = actions.FunctionCall(
-            _MOVE_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
-            '''
-        elif state[0] and possible_actions[action] == _MOVE_SCREEN:
+            _ATTACK_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
+        elif state[0] and possible_actions[action] == _ATTACK_SCREEN:
+            print("_ATTACK_SCREEN")
             target_x, target_y = A_Star(obs, current_pos, target_pos)
             func = actions.FunctionCall(
-                _MOVE_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
+                _ATTACK_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
         elif possible_actions[action] == _SELECT_ARMY:
+            print("_SELECT_ARMY")
             func = actions.FunctionCall(_SELECT_ARMY, [_SELECT_ALL])
         elif state[0] and possible_actions[action] == _SELECT_POINT:
-            ai_view = obs.observation['screen'][_AI_RELATIVE]
-            backgroundxs, backgroundys = (ai_view == _BACKGROUND).nonzero()
+            print("_SELET_POINT")
+            # ai_view = obs.observation['screen'][_AI_RELATIVE]
+            # backgroundxs, backgroundys = (ai_view == _BACKGROUND).nonzero()
+            pprint(obs.observation['feature_screen'])
+            pprint(obs.observation['feature_screen'].shape)
+
+            backgroundxs, backgroundys = obs.observation['feature_screen'][_AI_RELATIVE].nonzero()
             point = np.random.randint(0, len(backgroundxs))
             backgroundx, backgroundy = backgroundxs[point], backgroundys[point]
             func = actions.FunctionCall(
-                _SELECT_POINT, [_NOT_QUEUED, [backgroundy, backgroundx]])       
+                _SELECT_POINT, [_NOT_QUEUED, [backgroundy, backgroundx]])
         elif state[0] and possible_actions[action] == _MOVE_MIDDLE:
-            func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [32, 32]])'''
-        return func
+            func = actions.FunctionCall(_ATTACK_SCREEN, [_NOT_QUEUED, [32, 32]])
+
+        try:
+            return func
+        except ValueError:
+            return actions.FunctionCall(_NO_OP, [])
