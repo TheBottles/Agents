@@ -44,7 +44,7 @@ possible_actions = [
     _SELECT_ARMY,
     _SELECT_POINT,
     _ATTACK_SCREEN,
-    _MOVE_RAND,
+    # _MOVE_RAND,
     _MOVE_MIDDLE,
     _MOVE_SCREEN
 ]
@@ -169,11 +169,9 @@ class QTable(object):
 class FlankingAgent(base_agent.BaseAgent):
     def __init__(self, load_qt=None, load_st=None):
         super(FlankingAgent, self).__init__()
-        if load_qt and load_st:
-            self.qtable = QTable(
-                possible_actions, load_qt="qTable-moveToBacon.npy", load_st="qStates-moveToBacon.npy")
-        else:
-            self.qtable = QTable(possible_actions)
+        load_qt = load_qt if load_qt else  "qTable.npy"
+        load_st = load_st if load_st else "qStates.npy"
+        self.qtable = QTable(possible_actions, load_qt=load_qt, load_st=load_st)
         self.steps = 0
 
     def step(self, obs):

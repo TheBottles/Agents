@@ -78,7 +78,7 @@ def Graph(location, shape):
     neighbors = [(x-thresh, y-thresh),  (x-thresh, y), (x-thresh, y+thresh), (x, y-thresh), (x+thresh, y-thresh), (x+thresh,y-thresh), (x+thresh, y), (x+thresh, y+thresh)]
     goto = []
     for n in neighbors:
-        if ( n[0] < 0  ) or ( n[0] >= shape[0]) or ( n[1] < 0 ) or (n[1] >= shape[1]):
+        if ( n[0] < 0  ) or ( n[0] >= shape[0]) or ( n[1] < 0 ) or (n[1] >= shape[1]) or np.isnan(n).any():
             continue
         goto.append(n)
     # explored.update(set(goto))
