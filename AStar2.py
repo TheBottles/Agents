@@ -3,8 +3,8 @@ import math
 import heapq
 from coordgrabber import *
 import numpy as np
-# from math import round
-import copy
+from unitselection import *
+
 
 '''Script to implement A* algorithm for path from one point
 in X/Y plane to the other point'''
@@ -25,13 +25,6 @@ class StateObject:
         return False
     def __str__(self):
         return "%s" % (str(self.state))
-
-'''Distance from any point to our goal coordinates'''
-def Distance_Calc(X_Goal, Y_Goal, X, Y):
-    X_Distance = math.pow((X_Goal - X), 2)
-    Y_Distance = math.pow((Y_Goal - Y), 2)
-    Final = math.sqrt(X_Distance + Y_Distance)
-    return Final
 
 '''Get a list of all the points that can go out from one single point'''
 def connecting_points(Current, Points):
@@ -70,10 +63,10 @@ def heuristic(obs, location, target):
     X, Y = location
     X_Goal, Y_Goal = target
     NUM_HOSTILE = get_num_enemies(obs)
-    TARGET_DISTANCE =  Distance_Calc(X_Goal, Y_Goal, X, Y)
+    TARGET_DISTANCE =  Distance_Calc((X_Goal, Y_Goal), (X, Y))
     Enemy_Locations = get_enemy_coords(obs)
     X_Enemy, Y_Enemy = Enemy_Locations[0].mean(), Enemy_Locations[1].mean()
-    ENEMY_DISTANCE = Distance_Calc(X_Enemy, Y_Enemy, X, Y)
+    ENEMY_DISTANCE = Distance_Calc((X_Enemy, Y_Enemy), (X, Y))
 
     # print( "%5.2f %5.2f" % (TARGET_DISTANCE, ENEMY_DISTANCE * .5))
     return NUM_HOSTILE + TARGET_DISTANCE - (ENEMY_DISTANCE * .5)
@@ -100,7 +93,7 @@ def pathfinding(obs, Start, Goal):
     heapClosed = []
     Temp = StateObject()
     Temp.state = Start
-    Temp.cost = Distance_Calc(Goal[0], Goal[1], Start[0], Start[1]) + 1
+    Temp.cost = Distance_Calc(Goal, Start) + 1
     Temp.backpointer = None
     heapOpen.append(Temp)
     heapq.heapify(heapOpen)
@@ -114,7 +107,7 @@ def pathfinding(obs, Start, Goal):
         heapq.heapify(heapOpen) #Update the heap
         Current = heapq.heappop(heapOpen)
         Current.state = (int(Current.state[0]), int(Current.state[1]))
-        distance_to_target = Distance_Calc (Goal[0], Goal[1], Current.state[0], Current.state[1])
+        distance_to_target = Distance_Calc (Goal, Current.state)
         if distance_to_target <= 15:
                 final = StateObject()
                 final.state = Goal
@@ -135,7 +128,7 @@ def pathfinding(obs, Start, Goal):
                 Temp = StateObject() #Create the StateObj for heap
                 #Distance from the goal + cost of moving one square
                 # fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
-                fn = heuristic(obs, n, Goal)
+                fn = Distance_Calc(n, Goal)
                 # print(fn)
                 Temp.state = n
                 Temp.cost = fn
@@ -178,27 +171,6 @@ def A_Star(obs, location, target):
     '''For the sake of implementation I started with 0,0
     but this will change based on where in the map we are
     since we are not always going to be at (0,0)'''
-    # X,Y = target
-    # # List_X = list(range(0,X + 1))
-    # # List_Y = list(range(0,Y + 1))
-    # List_X = list(range(0,63))
-    # List_Y = list(range(0,63))
-    #
-    # Points = []
-    # '''Account for instance when there are more Y's than X's'''
-    # for x in List_X :
-    #     for y in List_Y:
-    #         Points.append([x,y])
-    # Dic = dict()
-    # for p in Points:
-    #     I = connecting_points(p, Points)
-    #     New_I = tuple(I)
-    #     Dic[tuple(p)] = New_I
-    # Heap = []
-    #
-    # for key in Dic:
-    #     print("This is the state: ",key)
-    #     print(Dic[key])
 
     return pathfinding(obs,location, target)
 

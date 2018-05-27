@@ -24,6 +24,7 @@ _AI_SELF = 1
 #
 #     kmeans = KMeans(n_clusters = num_pixels / unit_pixels)
 
+
 """ takes in an observation and returns the units as an array """
 def get_units(obs):
     return obs.observation['feature_units']
