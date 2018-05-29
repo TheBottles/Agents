@@ -74,7 +74,7 @@ def heuristic(obs, location, target):
 "Converts an (x,y) coordinate to neighbor coordinates"
 def Graph(location, shape):
     x,y = location
-    thresh = 5
+    thresh = 10
     neighbors = [(x-thresh, y-thresh),  (x-thresh, y), (x-thresh, y+thresh), (x, y-thresh), (x+thresh, y-thresh), (x+thresh,y-thresh), (x+thresh, y), (x+thresh, y+thresh)]
     goto = []
     for n in neighbors:
@@ -156,7 +156,7 @@ def pathfinding(obs, Start, Goal):
         current = current.backpointer
 
     try:
-        return path[-3]
+        return path[-2]
     except IndexError:
         return Goal
 
@@ -171,7 +171,7 @@ def A_Star(obs, location, target):
     '''For the sake of implementation I started with 0,0
     but this will change based on where in the map we are
     since we are not always going to be at (0,0)'''
-
+    if Distance_Calc(location, target) < 15: return target
     return pathfinding(obs,location, target)
 
 
