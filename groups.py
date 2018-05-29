@@ -102,7 +102,7 @@ class Group():
         func = actions.FunctionCall(_NO_OP, [])
         units = get_units(obs)
 
-        print(state, action, possible_action[action])
+        # print(state, action, possible_action[action])
 
         if not obs.last():
             score = obs.observation['score_cumulative'][3] + \
@@ -112,16 +112,15 @@ class Group():
                 self.prev_state, state, self.prev_action, score)
 
         if possible_action[action] not in obs.observation['available_actions']:
-            print("Cannot perform", possible_action[action].name, "right now")
+            # print("Cannot perform", possible_action[action].name, "right now")
             pass
         elif possible_action[action] == _CONTROL_GROUP:
-            print("Controlling group", self.control_id)
-
+            # print("Controlling group", self.control_id)
 
             if not self.selected and not self.set:
-                print("    Select unset units")
+                # print("    Select unset units")
                 if not self.initial_unit_coors:
-                    print("        Cannot initialize units from null list")
+                    # print("        Cannot initialize units from null list")
                     pass
                 else:
                     max_coords = tuple(np.max(self.initial_unit_coors, axis = 0))
@@ -133,26 +132,26 @@ class Group():
                     return True, func
 
             elif self.selected and not self.set:
-                print("    Set control group")
+                # print("    Set control group")
                 self.control_id = get_next_id(obs)
                 func = actions.FunctionCall(_CONTROL_GROUP, [_SET_GROUP, [self.control_id]])
                 self.set = True
                 return True, func
 
             elif self.set and not self.selected:
-                print("    Select control group")
+                # print("    Select control group")
                 func = actions.FunctionCall(_CONTROL_GROUP, [_SELECT_ALL, [self.control_id]])
                 deselect(group_queue)
                 self.selected = True
                 return True, func
 
-            else: print("    Units set and selected, but trying to control group, need to move or attack instead")
+            # else: print("    Units set and selected, but trying to control group, need to move or attack instead")
 
 
         elif possible_action[action] == _ATTACK_SCREEN:
-            print("Attempting to move or attack")
+            # print("Attempting to move or attack")
             if self.selected:
-                print("    DO A* AND ATTACK") # assume units are already selected here
+                # print("    DO A* AND ATTACK") # assume units are already selected here
                 target_x, target_y = A_Star(obs, current_pos, target_pos)
                 # target_x, target_y = target_pos
 
@@ -166,7 +165,7 @@ class Group():
                 func = actions.FunctionCall(
                     TYPE_MOVE, [_NOT_QUEUED, [target_x, target_y]])
                 return active, func
-            else: print("    Units were not selected!")
+            # else: print("    Units were not selected!")
 
         elif state[3] and possible_action[action] == _SELECT_ARMY:
             # print("Select entire army")
@@ -176,7 +175,7 @@ class Group():
             return True, func
 
         elif not do_not_split and not state[3] and possible_action[action] == _SELECT_RECT:
-            print("Select some units from army") # assume that all units are grouped together
+            # print("Select some units from army") # assume that all units are grouped together
             # find the clusters
             #num_clusters, cluster_sets, clusters, len(units[0])
             #num_clusters, cluster_sets, clusters, total_units = count_group_clusters(obs, _AI_SELF)
@@ -189,7 +188,7 @@ class Group():
             g2_mean = tuple(np.mean(group2, axis = 0))
             g1_mean = tuple(np.mean(group1, axis = 0))
             print(g1_mean)
-            
+
             newGroup = Group(g2_mean, group2)
             newGroup.Flanker = True
             # pop the new group into the queue
@@ -208,7 +207,7 @@ class Group():
             return True, func
 
 
-        print("Releasing Control")
+        # print("Releasing Control")
         self.selected = False
         if self.prev_action == _NO_OP: return True, func # this is done to prevent an infinite loop
         else: return False, func #return false because we didn't perfom action
