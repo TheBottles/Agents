@@ -39,6 +39,10 @@ EPS_END = 0.025
 EPS_DECAY = 2500
 steps = 0
 
+SELECT_ADD_OPTIONS = [
+    ("select", False),
+    ("add", True),
+]
 
 possible_action = [
     _NO_OP,
@@ -114,7 +118,7 @@ class Group():
             max_coords = tuple(np.max(group1, axis = 0))
             # get the lowest x and y points from our group1
             min_coords = tuple(np.min(group1, axis = 0))
-            func = actions.FunctionCall( _SELECT_RECT, [False, max_coords, min_coords])
+            func = actions.FunctionCall( _SELECT_RECT, [[0], max_coords, min_coords])
             print("RETT")
             return True, func
         else:
