@@ -25,6 +25,7 @@ _MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
 _SELECT_ARMY = actions.FUNCTIONS.select_army.id
 _SELECT_POINT = actions.FUNCTIONS.select_point.id
 _SELECT_RECT = actions.FUNCTIONS.select_rect.id
+_CONTROL_GROUP = actions.FUNCTIONS.control_group.id
 _MOVE_RAND = 1000
 _MOVE_MIDDLE = 2000
 _BACKGROUND = 0
@@ -57,17 +58,21 @@ possible_action = [
 
 class Group():
 
-    def __init__(self, location = None):
+    def __init__(self, location = NONE, unit_locations = None):
         self.moving = False
         self.selected = False
         self.target = None
+        
         self.prev_state = None
         self.prev_action = None
         self.prev_location = location
 
+        self.control_id = None
+        self.inital_unit_coors = unit_locations
+
     def do_action(self, obs, qtable, group_queue):
 
-        state, target_pos, current_pos = get_state(obs)
+        state, target_pos, current_pos = get_state(obs, self.selected, self.control_id)
 
         self.prev_state = state
         action = qtable.get_action(state, obs.observation['available_actions'])

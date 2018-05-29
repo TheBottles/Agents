@@ -83,7 +83,7 @@ def get_target_coords(obs):
 def get_eps_threshold(steps_done):
     return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
 
-def get_state(obs):
+def get_state(obs, selected = False, controlled = False):
     """ Takes in an observation
         Returns a 2-tuple:
             1st item is also a 2-tuple of boolean values indicating state
@@ -91,14 +91,16 @@ def get_state(obs):
             2nd item is a 1x2 numpy array of xy coordinates to a target location
     """
     # need a better way to determine target destination, roach range is 4
-    targetxs, targetys = get_target_coords(obs)
+    targetxs, targetys = get_target_coords(obs, selected)
     screen_features = get_units(obs)
     marinexs, marineys = get_unit_coors(screen_features, 1)
     marinex, mariney = marinexs.mean(), marineys.mean()
     marine_on_target = np.min(targetxs) <= marinex <= np.max(
         targetxs) and np.min(targetys) <= mariney <= np.max(targetys)
     enemy = bool(get_alliance_units(screen_features, _AI_HOSTILE))
-    return (enemy, int(marine_on_target)), [targetxs, targetys], (marinex, mariney)
+
+
+    return (enemy, selected, int(marine_on_target), controlled), [targetxs, targetys], (marinex, mariney)
 
 
 class QTable(object):
