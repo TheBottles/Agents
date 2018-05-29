@@ -27,7 +27,7 @@ class Group():
             target_x, target_y = A_Star(obs, current_pos, target_pos)
             func = actions.FunctionCall(
                 _ATTACK_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
-            return True, func
+            return False, func
         elif possible_action[action] == _SELECT_ARMY:
             print("Select entire army")
             func = actions.FunctionCall(_SELECT_ARMY, [_SELECT_ALL])
