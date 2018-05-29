@@ -27,7 +27,7 @@ _ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
 _MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
 _SELECT_ARMY = actions.FUNCTIONS.select_army.id
 _SELECT_POINT = actions.FUNCTIONS.select_point.id
-_SELECT_RECT = action.Functions.select_rect.id
+_SELECT_RECT = actions.FUNCTIONS.select_rect.id
 _MOVE_RAND = 1000
 _MOVE_MIDDLE = 2000
 _BACKGROUND = 0
@@ -43,7 +43,7 @@ EPS_DECAY = 2500
 steps = 0
 
 
-possible_actions = [
+possible_action = [
     _NO_OP,
     _SELECT_ARMY,
     # _SELECT_POINT,
@@ -116,13 +116,13 @@ class QTable(object):
             self.q_table = self.load_qtable(load_qt)
         else:
             self.q_table = np.zeros(
-                (3, len(possible_actions)))  # create a Q table
+                (3, len(possible_action)))  # create a Q table
 
     def get_action(self, state, allowed_actions):
-        actions = list(set(possible_actions).intersection(allowed_actions))
-        print(possible_actions)
-        print(allowed_actions)
-        print(actions)
+        actions = list(set(possible_action).intersection(allowed_actions))
+        #print(possible_action)
+        #print(allowed_actions)
+        #print(actions)
         if not self.load_qt and np.random.rand() < get_eps_threshold(steps):
             # currently arbitrarily picks an action if the state does not already exist
             return np.random.randint(0, len(actions))
@@ -135,7 +135,7 @@ class QTable(object):
 
     def add_state(self, state):
         self.q_table = np.vstack(
-            [self.q_table, np.zeros((1, len(possible_actions)))])
+            [self.q_table, np.zeros((1, len(possible_action)))])
         self.states_list.add(state)
 
     def update_qtable(self, state, next_state, action, reward):

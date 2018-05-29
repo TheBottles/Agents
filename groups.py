@@ -1,4 +1,55 @@
+import math
+import numpy as np
+from pysc2.agents import base_agent
+from pysc2.lib import actions
+from pysc2.lib import features
+from pysc2.env import sc2_env, run_loop, available_actions_printer
+from pysc2 import maps
+from absl import flags
+import os
+import time
+from s2clientprotocol import raw_pb2 as sc_raw
+from s2clientprotocol import sc2api_pb2 as sc_pb
+from pprint import pprint
+from coordgrabber import *
+from AStar2 import A_Star
 from qtable import *
+from unitselection import *
+
+
+_AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
+_AI_SELECTED = features.SCREEN_FEATURES.selected.index
+_NO_OP = actions.FUNCTIONS.no_op.id
+_ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
+_MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
+_SELECT_ARMY = actions.FUNCTIONS.select_army.id
+_SELECT_POINT = actions.FUNCTIONS.select_point.id
+_SELECT_RECT = actions.FUNCTIONS.select_rect.id
+_MOVE_RAND = 1000
+_MOVE_MIDDLE = 2000
+_BACKGROUND = 0
+_AI_SELF = 1
+_AI_ALLIES = 2
+_AI_NEUTRAL = 3
+_AI_HOSTILE = 4
+_SELECT_ALL = [0]
+_NOT_QUEUED = [0]
+EPS_START = 0.9
+EPS_END = 0.025
+EPS_DECAY = 2500
+steps = 0
+
+
+possible_action = [
+    _NO_OP,
+    _SELECT_ARMY,
+    # _SELECT_POINT,
+    _SELECT_RECT,
+    _ATTACK_SCREEN,
+    # _MOVE_RAND,
+    # _MOVE_MIDDLE,
+    # _MOVE_SCREEN
+]
 
 class Group():
 
@@ -12,15 +63,20 @@ class Group():
 
     def do_action(self, obs, qtable, group_queue):
 
-        state, moving, groups, target, location = get_state(obs)
+        state, target_pos, current_pos = get_state(obs)
 
         self.prev_state = state
         action = qtable.get_action(state, obs.observation['available_actions'])
         self.prev_action = action
-        self.moving = moving
+        self.moving = state[1]
         func = actions.FunctionCall(_NO_OP, [])
         units = get_units(obs)
-
+        if not obs.last():
+            score = obs.observation['score_cumulative'][3] + \
+                obs.observation['score_cumulative'][5] + \
+                obs.observation['score_cumulative'][0]
+            qtable.update_qtable(
+                self.prev_state, state, self.prev_action, score)
 
         if possible_action[action] == _ATTACK_SCREEN:
             print("DO A* AND ATTACK") # assume units are already selected here
@@ -36,27 +92,30 @@ class Group():
             print("select some from army") # assume that all units are grouped together
             # find the clusters
             #num_clusters, cluster_sets, clusters, len(units[0])
-            num_clusters, cluster_sets, clusters, total_units = count_group_clusters(obs, _AI_SELF)
+            #num_clusters, cluster_sets, clusters, total_units = count_group_clusters(obs, _AI_SELF)
             # get half of the clusters
-            group1, group2 = group_splitter(cluster, 0)
+            screen_features = get_units(obs)
+            location = get_unit_coors(screen_features, _AI_SELF)
+            group1, group2 = group_splitter(location, 1)
             # generate a new group with last known location
-            newGroup = Group((group2[0].mean(), group1[1].mean()))
+            print("___--------------------------------------------------")
+            g2_mean = tuple(np.mean(group2, axis = 0))
+            g1_mean = tuple(np.mean(group1, axis = 0))
+            print(g1_mean)
+            newGroup = Group(g2_mean)
             # pop the new group into the queue
-            group_queue.put(newGroup)
+            group_queue.append(newGroup)
             # get our group location
-            self.prev_location = (group1[0].mean(), group1[1].mean())
-            selk.selected = True
+            self.prev_location = g1_mean
+            self.selected = True
             # return selection
 
             # get the highest x and y points from our group1
-            xmax = group[0][np.argmax(group1[0])]
-            ymax = group[1][np.argmax(group1[1])]
-
+            max_coords = tuple(np.max(group1, axis = 0))
             # get the lowest x and y points from our group1
-            xmin = group[0][np.argmin(group1[0])]
-            ymin = group[1][np.argmin(group1[1])]
-
-            func = action.FunctionCall( _SELECT_RECT, [False, [ymax, xmax], [ymin, xmin]])
+            min_coords = tuple(np.min(group1, axis = 0))
+            func = actions.FunctionCall( _SELECT_RECT, [False, max_coords, min_coords])
+            print("RETT")
             return True, func
         else:
             print("RELEASE CONTROL HERE")
