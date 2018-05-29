@@ -27,6 +27,7 @@ _ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
 _MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
 _SELECT_ARMY = actions.FUNCTIONS.select_army.id
 _SELECT_POINT = actions.FUNCTIONS.select_point.id
+_SELECT_RECT = action.Functions.select_rect.id
 _MOVE_RAND = 1000
 _MOVE_MIDDLE = 2000
 _BACKGROUND = 0
@@ -45,14 +46,13 @@ steps = 0
 possible_actions = [
     _NO_OP,
     _SELECT_ARMY,
-    _SELECT_POINT,
+    # _SELECT_POINT,
+    _SELECT_RECT,
     _ATTACK_SCREEN,
-    _MOVE_RAND,
-    _MOVE_MIDDLE,
-    _MOVE_SCREEN
+    # _MOVE_RAND,
+    # _MOVE_MIDDLE,
+    # _MOVE_SCREEN
 ]
-
-
 
 def get_target_coords(obs):
     # Todo: handle case when there are no enemy coordiantes
@@ -167,84 +167,3 @@ class QTable(object):
 
     def load_states(self, filepath):
         return np.load(filepath)
-
-
-class FlankingAgent(base_agent.BaseAgent):
-    def __init__(self, load_qt=None, load_st=None):
-        super(FlankingAgent, self).__init__()
-        if load_qt and load_st:
-            self.qtable = QTable(
-                possible_actions, load_qt="qTable-moveToBacon.npy", load_st="qStates-moveToBacon.npy")
-        else:
-            self.qtable = QTable(possible_actions)
-        self.steps = 0
-
-    def step(self, obs):
-
-        '''Step function gets called automatically by pysc2 environment'''
-        super(FlankingAgent, self).step(obs)
-        state, target_pos, current_pos = get_state(obs)
-
-        if not obs.first():
-            score = obs.observation['score_cumulative'][3] + \
-                obs.observation['score_cumulative'][5] + \
-                obs.observation['score_cumulative'][0]
-            self.qtable.update_qtable(
-                self.prev_state, state, self.prev_action, score)
-            pprint(obs)
-
-            obs_file = open('obs_file.txt', 'w')
-            obs_file.write(str(obs))
-
-            exit()
-
-
-        if obs.last():
-            self.qtable.save_qtable('qTable')
-            self.qtable.save_states('qStates')
-            np.save('sampleobs', obs)
-
-        # pprint(obs.observation)
-            #pprint(obs)
-
-        self.prev_state = state
-        action = self.qtable.get_action(state, obs.observation['available_actions'])
-        self.prev_action = action
-        func = actions.FunctionCall(_NO_OP, [])
-        units = get_units(obs)
-
-        if possible_actions[action] == _NO_OP or possible_actions[action] == _MOVE_SCREEN:
-            print("_NO_OP")
-            func = actions.FunctionCall(_NO_OP, [])
-        elif state[0] and possible_actions[action] == _MOVE_RAND:
-            print("_MOVE_RAND")
-            target_x, target_y = target_pos[0].max(), target_pos[1].max()
-            func = actions.FunctionCall(
-            _ATTACK_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
-        elif state[0] and possible_actions[action] == _ATTACK_SCREEN:
-            print("_ATTACK_SCREEN")
-            target_x, target_y = A_Star(obs, current_pos, target_pos)
-            func = actions.FunctionCall(
-                _ATTACK_SCREEN, [_NOT_QUEUED, [target_y, target_x]])
-        elif possible_actions[action] == _SELECT_ARMY:
-            print("_SELECT_ARMY")
-            func = actions.FunctionCall(_SELECT_ARMY, [_SELECT_ALL])
-        elif state[0] and possible_actions[action] == _SELECT_POINT:
-            print("_SELET_POINT")
-            # ai_view = obs.observation['screen'][_AI_RELATIVE]
-            # backgroundxs, backgroundys = (ai_view == _BACKGROUND).nonzero()
-            pprint(obs.observation['feature_screen'])
-            pprint(obs.observation['feature_screen'].shape)
-
-            backgroundxs, backgroundys = obs.observation['feature_screen'][_AI_RELATIVE].nonzero()
-            point = np.random.randint(0, len(backgroundxs))
-            backgroundx, backgroundy = backgroundxs[point], backgroundys[point]
-            func = actions.FunctionCall(
-                _SELECT_POINT, [_NOT_QUEUED, [backgroundy, backgroundx]])
-        elif state[0] and possible_actions[action] == _MOVE_MIDDLE:
-            func = actions.FunctionCall(_ATTACK_SCREEN, [_NOT_QUEUED, [32, 32]])
-
-        try:
-            return func
-        except ValueError:
-            return actions.FunctionCall(_NO_OP, [])

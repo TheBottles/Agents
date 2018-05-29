@@ -50,25 +50,24 @@ def get_unit_coors(units, alliance):
     return gen_coordinates(get_alliance_units(units, alliance))
 
 
-# """ Defines clusters within a map relative to the AI """
-# def count_group_clusters(obs, who = _AI_SELF):
-#     unit_graph = obs.observation['screen'][_AI_RELATIVE]
-#     units = np.array((unit_graph == who).nonzero())
-#     if np.any(units[0]):
-#         thresh = 10 # this should translate to 10 pixels
-#         clusters = hcluster.fclusterdata(units.T, thresh, criterion = 'distance')
-#         cluster_sets = set(clusters)
-#         num_clusters = len(set(clusters))
-#         return num_clusters, cluster_sets, clusters, len(units[0])
-#     else:
-#         return 0, 0, 0, 0
-#
-# """ Splits a cluster into two, either vertically or horizontally """
-# def group_splitter(cluster, axis = 0):
-#     group1 = []
-#     group2 = []
-#     horizontal_split = cluster[axis].mean()
-#     for point in cluster:
-#         if point[axis] < horizontal_split: group1.append(point)
-#         else: group2.append(point)
-#     return group1, group2
+""" Defines clusters within a map relative to the AI """
+def count_group_clusters(obs, who = _AI_SELF):
+    units = get_unit_coors(get_units(obs), alliance)
+    if np.any(units[0]):
+        thresh = 10 # this should translate to 10 pixels
+        clusters = hcluster.fclusterdata(units.T, thresh, criterion = 'distance')
+        cluster_sets = set(clusters)
+        num_clusters = len(set(clusters))
+        return num_clusters, cluster_sets, clusters, len(units[0])
+    else:
+        return 0, 0, 0, 0
+
+""" Splits a cluster into two, either vertically or horizontally """
+def group_splitter(cluster, axis = 0):
+    group1 = []
+    group2 = []
+    horizontal_split = cluster[axis].mean()
+    for point in cluster:
+        if point[axis] < horizontal_split: group1.append(point)
+        else: group2.append(point)
+    return group1, group2
