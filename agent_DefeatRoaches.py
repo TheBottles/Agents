@@ -13,13 +13,14 @@ from s2clientprotocol import sc2api_pb2 as sc_pb
 from pprint import pprint
 from coordgrabber import *
 from AStar2 import A_Star
+from qtable import *
 from unitselection import *
+from groups import *
 
 np.set_printoptions(threshold=np.nan)
 
 
 # np.set_printoptions(suppress=True)
-
 _AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _AI_SELECTED = features.SCREEN_FEATURES.selected.index
 _NO_OP = actions.FUNCTIONS.no_op.id
@@ -27,6 +28,7 @@ _ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
 _MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
 _SELECT_ARMY = actions.FUNCTIONS.select_army.id
 _SELECT_POINT = actions.FUNCTIONS.select_point.id
+_SELECT_RECT = actions.FUNCTIONS.select_rect.id
 _MOVE_RAND = 1000
 _MOVE_MIDDLE = 2000
 _BACKGROUND = 0
@@ -42,14 +44,15 @@ EPS_DECAY = 2500
 steps = 0
 
 
-possible_actions = [
+possible_action = [
     _NO_OP,
     _SELECT_ARMY,
-    _SELECT_POINT,
+    # _SELECT_POINT,
+    _SELECT_RECT,
     _ATTACK_SCREEN,
-    _MOVE_RAND,
-    _MOVE_MIDDLE,
-    _MOVE_SCREEN
+    # _MOVE_RAND,
+    # _MOVE_MIDDLE,
+    # _MOVE_SCREEN
 ]
 
 
@@ -58,11 +61,13 @@ class FlankingAgent(base_agent.BaseAgent):
         super(FlankingAgent, self).__init__()
         if load_qt and load_st:
             self.qtable = QTable(
-                possible_actions, load_qt="qTable-moveToBacon.npy", load_st="qStates-moveToBacon.npy")
+                possible_action, load_qt="qTable-moveToBacon.npy", load_st="qStates-moveToBacon.npy")
         else:
-            self.qtable = QTable(possible_actions)
+            self.qtable = QTable(possible_action)
         self.steps = 0
         self.groups = []
+        self.prev_state = None
+        self.prev_action = None
 
     def step(self, obs):
 
@@ -71,21 +76,14 @@ class FlankingAgent(base_agent.BaseAgent):
 
         if obs.first():
             self.groups = []
-            self.append(Group())
+            self.groups.append(Group())
         elif obs.last():
             self.qtable.save_qtable('qTable')
             self.qtable.save_states('qStates')
-            np.save('sampleobs', obs)
-        else:
-            score = obs.observation['score_cumulative'][3] + \
-                obs.observation['score_cumulative'][5] + \
-                obs.observation['score_cumulative'][0]
-            self.qtable.update_qtable(
-                self.prev_state, state, self.prev_action, score)
-
         while self.groups:
-            group = self.group[0]
-            active, func = group.do_action(obs, self.qtable, self.group)
+            print("WHILE LOOP")
+            group = self.groups[0]
+            active, func = group.do_action(obs, self.qtable, self.groups)
             if active:
                 return func
             self.groups.pop(0)
