@@ -10,10 +10,9 @@ import os
 import time
 from s2clientprotocol import raw_pb2 as sc_raw
 from s2clientprotocol import sc2api_pb2 as sc_pb
-from pprint import pprint
-from coordgrabber import *
 from AStar2 import A_Star
 from unitselection import *
+from qtable import *
 
 np.set_printoptions(threshold=np.nan)
 
@@ -52,43 +51,17 @@ possible_actions = [
     _MOVE_SCREEN
 ]
 
-
 class FlankingAgent(base_agent.BaseAgent):
     def __init__(self, load_qt=None, load_st=None):
         super(FlankingAgent, self).__init__()
-        if load_qt and load_st:
-            self.qtable = QTable(
-                possible_actions, load_qt="qTable-moveToBacon.npy", load_st="qStates-moveToBacon.npy")
-        else:
-            self.qtable = QTable(possible_actions)
+        self.qtable = QTable()
         self.steps = 0
         self.groups = []
+        self.d = 0
 
     def step(self, obs):
-
         '''Step function gets called automatically by pysc2 environment'''
         super(FlankingAgent, self).step(obs)
 
-        if obs.first():
-            self.groups = []
-            self.append(Group())
-        elif obs.last():
-            self.qtable.save_qtable('qTable')
-            self.qtable.save_states('qStates')
-            np.save('sampleobs', obs)
-        else:
-            score = obs.observation['score_cumulative'][3] + \
-                obs.observation['score_cumulative'][5] + \
-                obs.observation['score_cumulative'][0]
-            self.qtable.update_qtable(
-                self.prev_state, state, self.prev_action, score)
-
-        while self.groups:
-            group = self.group[0]
-            active, func = group.do_action(obs, self.qtable, self.group)
-            if active:
-                return func
-            self.groups.pop(0)
-            self.groups.append(group)
-
-        return actions.FunctionCall(_NO_OP, [])
+        state, target_pos, current_pos  = self.qtable.get_env(obs)
+        return actions.FunctionCall( _ATTACK_SCREEN, [_NOT_QUEUED, target_pos ])
