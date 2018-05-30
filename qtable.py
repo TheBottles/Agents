@@ -15,6 +15,8 @@ from coordgrabber import *
 from AStar2 import A_Star
 from unitselection import *
 
+from random import randint
+
 np.set_printoptions(threshold=np.nan)
 
 
@@ -28,6 +30,7 @@ _MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
 _SELECT_ARMY = actions.FUNCTIONS.select_army.id
 _SELECT_POINT = actions.FUNCTIONS.select_point.id
 _SELECT_RECT = actions.FUNCTIONS.select_rect.id
+_CONTROL_GROUP = actions.FUNCTIONS.select_control_group.id
 _MOVE_RAND = 1000
 _MOVE_MIDDLE = 2000
 _BACKGROUND = 0
@@ -37,16 +40,22 @@ _AI_NEUTRAL = 3
 _AI_HOSTILE = 4
 _SELECT_ALL = [0]
 _NOT_QUEUED = [0]
+_SET_GROUP = [1]
 EPS_START = 0.9
 EPS_END = 0.025
 EPS_DECAY = 2500
 steps = 0
 
+SELECT_ADD_OPTIONS = [
+    ("select", False),
+    ("add", True),
+]
 
 possible_action = [
     _NO_OP,
-    _SELECT_ARMY,
+    # _SELECT_ARMY,
     # _SELECT_POINT,
+    _CONTROL_GROUP,
     _SELECT_RECT,
     _ATTACK_SCREEN,
     # _MOVE_RAND,
@@ -54,10 +63,15 @@ possible_action = [
     # _MOVE_SCREEN
 ]
 
-def get_target_coords(obs):
+def get_flank_coords(obs, flanker):
     # Todo: handle case when there are no enemy coordiantes
     screen_features = get_units(obs)
     targetxs, targetys = get_unit_coors(screen_features, _AI_HOSTILE)
+
+    if not targetxs.size: return (randint(0,63), randint(0,63))
+
+    if flanker: return targetxs.mean(), targetys.mean()
+
     selfxs, selfys = get_unit_coors(screen_features, _AI_SELF)
     selfx = selfxs.mean()
     selfy = selfys.mean()
@@ -73,34 +87,43 @@ def get_target_coords(obs):
 
     if labelx > labely:
         if Distance_Calc(loc, (targetxs[ymin], targetys[ymin])) < Distance_Calc(loc, (targetxs[ymax], targetys[ymax])):
-            return targetxs[ymin], targetys[ymin]
-        else: return targetxs[ymax], targetys[ymax]
+            target = targetxs[ymin], targetys[ymin]
+        else: target =  targetxs[ymax], targetys[ymax]
     else:
         if Distance_Calc(loc, (targetxs[xmin], targetys[xmin])) < Distance_Calc(loc, (targetxs[xmax], targetys[xmax])):
-            return targetxs[xmin], targetys[xmin]
-        else: return targetxs[xmax], targetys[xmax]
+            target =  targetxs[xmin], targetys[xmin]
+        else: target =  targetxs[xmax], targetys[xmax]
+    #
+    # print("Target:", target)
+    return target
 
 def get_eps_threshold(steps_done):
     return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
 
-def get_state(obs, selected = False, controlled = False):
+def get_state(obs, selected = False, controlled = False, flanker = False, groups = []):
     """ Takes in an observation
         Returns a 2-tuple:
             1st item is also a 2-tuple of boolean values indicating state
                 -- this can be changed to accomidate more states (ex searching)
             2nd item is a 1x2 numpy array of xy coordinates to a target location
     """
-    # need a better way to determine target destination, roach range is 4
-    targetxs, targetys = get_target_coords(obs, selected)
     screen_features = get_units(obs)
-    marinexs, marineys = get_unit_coors(screen_features, 1)
-    marinex, mariney = marinexs.mean(), marineys.mean()
-    marine_on_target = np.min(targetxs) <= marinex <= np.max(
-        targetxs) and np.min(targetys) <= mariney <= np.max(targetys)
+
+    # need a better way to determine target destination, roach range is 4
+    targetxs, targetys = get_flank_coords(obs, flanker)
+    marinexs, marineys = obs.observation['feature_screen']['selected'].nonzero()
+    if len(marinexs) > 0:
+        marinex, mariney = marinexs.mean(), marineys.mean()
+        marine_on_target = np.min(targetxs) <= marinex <= np.max(
+            targetxs) and np.min(targetys) <= mariney <= np.max(targetys)
+    else:
+        marinex, mariney = (0,0)
+        marine_on_target = False
     enemy = bool(get_alliance_units(screen_features, _AI_HOSTILE))
 
+    multiple = len(groups) > 1
 
-    return (enemy, selected, int(marine_on_target), controlled), [targetxs, targetys], (marinex, mariney)
+    return (enemy, selected, int(marine_on_target), multiple, controlled, flanker), [targetxs, targetys], (marinex, mariney)
 
 
 class QTable(object):
@@ -120,14 +143,10 @@ class QTable(object):
             self.q_table = np.zeros(
                 (3, len(possible_action)))  # create a Q table
 
-    def get_action(self, state, allowed_actions):
-        actions = list(set(possible_action).intersection(allowed_actions))
-        #print(possible_action)
-        #print(allowed_actions)
-        #print(actions)
+    def get_action(self, state):
         if not self.load_qt and np.random.rand() < get_eps_threshold(steps):
             # currently arbitrarily picks an action if the state does not already exist
-            return np.random.randint(0, len(actions))
+            return np.random.randint(0, len(self.actions))
         else:
             if state not in self.states_list:
                 self.add_state(state)
