@@ -52,7 +52,7 @@ def get_unit_coors(units, alliance):
 
 """ Defines clusters within a map relative to the AI """
 def count_group_clusters(obs, who = _AI_SELF):
-    units = get_unit_coors(get_units(obs), alliance)
+    units = get_unit_coors(get_units(obs), who)
     if np.any(units[0]):
         thresh = 10 # this should translate to 10 pixels
         clusters = hcluster.fclusterdata(units.T, thresh, criterion = 'distance')
@@ -67,7 +67,7 @@ def group_splitter(cluster, axis = 0):
     group1 = []
     group2 = []
     horizontal_split = cluster[axis].mean()
-    for point in cluster:
-        if point[axis] < horizontal_split: group1.append(point)
-        else: group2.append(point)
+    for point in enumerate(zip(cluster[0],cluster[1])):
+        if point[1][axis] < horizontal_split: group1.append(point[1])
+        else: group2.append(point[1])
     return group1, group2
