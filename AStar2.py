@@ -83,12 +83,49 @@ def Graph(location, shape):
         goto.append(n)
     # explored.update(set(goto))
     return goto
+'''Function that makes list of circle points
+def getCirclePoints(Point_One, Point_Two):
+    points = []
+    Circle_X = int((Point_one[0] + Point_Two[0])/2)
+    Circle_Y = int((Point_One[1] + Point_Two[1])/2)
+
+    temp1 = math.pow((Point_One[0] - Point_Two[0]),2)
+    temp2 = math.pow((Point_One[1] - Point_Two[1]),2)
+    radius = math.sqrt(temp1 + temp2)
+
+    return points
+''' 
+#Leave this in case we need it 
+
+'''Check what the point gives when we plug it into the circle function'''
+def circleEquation(r, Cx, Cy, Point):
+    resultOne = Point[0] - Cx
+    resultOne = math.pow(resultOne, 2) 
+
+    resultTwo = Point[1] - Cy
+    resultTwo = math.pow(resultTwo, 2)
+
+    Total = resultOne + resultTwo
+
+    #Maybe this could be the cost 
+    Diff  = r - Total 
+    return Diff 
 
 
 '''A* implementation using the class slides'''
 def pathfinding(obs, Start, Goal):
 
     #Now we do all the agorithm here
+    #Not Implemented, just teting with it 
+    Circle_X = int((Start[0] + Goal[0])/2)
+    Circle_Y = int((Start[1] + Goal[1])/2)
+    temp1 = math.pow((Start[0] - Goal[0]),2)
+    temp2 = math.pow((Start[1] - Goal[1]),2)
+    radius = math.sqrt(temp1 + temp2)
+    #Circle_Y/X are the coordinates for the middle of the circle
+    #Now we can use the formula to see how far off each of these points are from the circle 
+    
+    
     heapOpen = []
     heapClosed = []
     Temp = StateObject()
@@ -125,6 +162,8 @@ def pathfinding(obs, Start, Goal):
             Neighbors = Graph(Current.state, shape)
             for n in Neighbors:
                 #There's 3 cases but only took accound for 2 so far
+                D = circleEquation(radius, Circle_X, Circle_Y, n)
+                print("The difference is ", D)
                 Temp = StateObject() #Create the StateObj for heap
                 #Distance from the goal + cost of moving one square
                 # fn = Distance_Calc(Goal[0], Goal[1], n[0], n[1]) + 1
