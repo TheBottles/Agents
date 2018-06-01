@@ -30,14 +30,17 @@ class QTable(object):
 
     def get_env(self, obs, idk1, idk2, idk3, idk4):
         screen_features = unitselection.get_units(obs)
-        print("-------------")
-        print(screen_features)
         #state
         state = self.get_state(obs);
 
 
         #current position of the ones selected
-        currentx, currenty = unitselection.get_unit_coors(screen_features, AI_SELF) #wrong
+        currentx = []
+        currenty = []
+        for unit in screen_features:
+            if unit[17] == 1:
+                currentx.append(unit[12])
+                currenty.append(unit[13])
         current_pos = (np.mean(currentx),np.mean(currenty))
 
         #target TODO: depends, top or bottom, depends on selected group

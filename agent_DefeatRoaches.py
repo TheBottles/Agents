@@ -68,32 +68,35 @@ class FlankingAgent(base_agent.BaseAgent):
         self.prev_state = None
         self.prev_action = None
 
-
     def step(self, obs):
         '''Step function gets called automatically by pysc2 environment'''
         super(FlankingAgent, self).step(obs)
 
-        if obs.first():
-            self.groups = []
-            self.groups.append(Group())
-            self.groups[0].control_id = 0
-            self.group_died = False
+        state, target, current = self.qtable.get_env(obs, 1,2,3,4)
 
-        while self.groups:
-            # print("WHILE LOOP")
-            group = self.groups[0]
+        return actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, current ])
 
-            if group.set and obs.observation['control_groups'][group.control_id][0] == 0:
-                self.groups.pop(0)
-                self.group_died = True
-                continue
+        # if obs.first():
+        #     self.groups = []
+        #     self.groups.append(Group())
+        #     self.groups[0].control_id = 0
+        #     self.group_died = False
 
-            active, func = group.do_action(obs, self.qtable, self.groups, self.group_died)
+        # while self.groups:
+        #     # print("WHILE LOOP")
+        #     group = self.groups[0]
 
-            if not active:
-                self.groups.pop(0)
-                self.groups.append(group)
+        #     if group.set and obs.observation['control_groups'][group.control_id][0] == 0:
+        #         self.groups.pop(0)
+        #         self.group_died = True
+        #         continue
 
-            return func
+        #     active, func = group.do_action(obs, self.qtable, self.groups, self.group_died)
 
-        return actions.FunctionCall(_NO_OP, [])
+        #     if not active:
+        #         self.groups.pop(0)
+        #         self.groups.append(group)
+
+        #     return func
+
+        # return actions.FunctionCall(_NO_OP, [])
