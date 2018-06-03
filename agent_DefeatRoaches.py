@@ -68,7 +68,15 @@ class FlankingAgent(base_agent.BaseAgent):
         self.groups = []
         self.prev_state = None
         self.prev_action = None
+        self.score = 0
 
+    def get_unit_health(self, obs, type):
+   		unit_hp = obs.observation['feature_units']
+   		total_hp = 0
+   		for unit in unit_hp:
+   			if(unit[1] == type):
+   				total_hp = total_hp+unit[2]
+   		return total_hp
 
     def step(self, obs):
 
@@ -92,9 +100,12 @@ class FlankingAgent(base_agent.BaseAgent):
         #     pprint(obs.observation[each].dtype.names)
         #     pprint("}")
         # exit()
-
         while self.groups:
             # print("WHILE LOOP")
+            hostile_health = self.get_unit_health(obs, _AI_HOSTILE)
+            step_score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])- self.score - hostile_health
+            self.score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])
+
             group = self.groups[0]
 
             if group.set and obs.observation['control_groups'][group.control_id][0] == 0:
@@ -102,7 +113,7 @@ class FlankingAgent(base_agent.BaseAgent):
                 self.group_died = True
                 continue
 
-            active, func = group.do_action(obs, self.groups, self.group_died)
+            active, func = group.do_action(obs, step_score, self.groups, self.group_died)
 
             if not active:
                 self.groups.pop(0)

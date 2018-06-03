@@ -85,16 +85,23 @@ def get_flank_coords(obs, flanker):
     labely = (targetys[ymax] - targetys[ymin])
     labelx = (targetxs[xmax] - targetxs[xmin])
 
+    # if
     if labelx > labely:
+        # Our group units are closer to the top of the enemy units
         if Distance_Calc(loc, (targetxs[ymin], targetys[ymin])) < Distance_Calc(loc, (targetxs[ymax], targetys[ymax])):
             target = targetxs[ymin], targetys[ymin]
+        # Our group units are closer to the bottom of the enemy units
         else: target =  targetxs[ymax], targetys[ymax]
     else:
+
         if Distance_Calc(loc, (targetxs[xmin], targetys[xmin])) < Distance_Calc(loc, (targetxs[xmax], targetys[xmax])):
             target =  targetxs[xmin], targetys[xmin]
         else: target =  targetxs[xmax], targetys[xmax]
     #
-    # print("Target:", target)
+    print("Target:", target)
+
+    for x,y in zip(targetxs, targetys):
+        print("    ", x,y)
     return target
 
 def get_eps_threshold(steps_done):
@@ -111,7 +118,7 @@ def get_state(obs, selected = False, controlled = False, flanker = False, groups
 
     # need a better way to determine target destination, roach range is 4
     targetxs, targetys = get_flank_coords(obs, flanker)
-    marinexs, marineys = obs.observation['feature_screen']['selected'].nonzero()
+    marineys, marinexs = obs.observation['feature_screen']['selected'].nonzero()
     if len(marinexs) > 0:
         marinex, mariney = marinexs.mean(), marineys.mean()
         marine_on_target = np.min(targetxs) <= marinex <= np.max(
