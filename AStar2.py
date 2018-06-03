@@ -5,6 +5,7 @@ from coordgrabber import *
 import numpy as np
 from unitselection import *
 
+PI = math.pi
 
 '''Script to implement A* algorithm for path from one point
 in X/Y plane to the other point'''
@@ -94,42 +95,37 @@ def getCirclePoints(Point_One, Point_Two):
     radius = math.sqrt(temp1 + temp2)
 
     return points
-''' 
-#Leave this in case we need it 
+'''
+#Leave this in case we need it
 
 '''Check what the point gives when we plug it into the circle function'''
 def circleEquation(r, Cx, Cy, Point):
     resultOne = Point[0] - Cx
-    resultOne = math.pow(resultOne, 2) 
+    resultOne = math.pow(resultOne, 2)
 
     resultTwo = Point[1] - Cy
     resultTwo = math.pow(resultTwo, 2)
 
     Total = resultOne + resultTwo
 
-    #Maybe this could be the cost 
-    Diff  = r - Total 
+    #Maybe this could be the cost
+    Diff  = r - Total
     return Diff
 
 
-def pathfinding(obs, Start, Goal):
-    d = 15 
+def dubins(obs, Start, Goal):
+    d = 15
     T = []
     D = []
     Waypoint = []
-    Flankpoint = [] 
+    Flankpoint = []
 
-    Circle_X = int((Start[0] + Goal[0])/2)
-    Circle_Y = int((Start[1] + Goal[1])/2)
-    temp1 = math.pow((Start[0] - Goal[0]),2)
-    temp2 = math.pow((Start[1] - Goal[1]),2)
-    radius = math.sqrt(temp1 + temp2)
     slope = (Start[1] - Goal[1])/(Start[0] - Goal[0])
 
     xd = (d/(math.sqrt(1 + (slope*slope))) + Goal[0])
     yd = ((d*slope)/(math.sqrt(1 + (slope*slope)))) + Goal[1]
 
-    D.append(xd) 
+    D.append(xd)
     D.append(yd)
 
 
@@ -137,7 +133,7 @@ def pathfinding(obs, Start, Goal):
     yt = (- (d*slope)/(math.sqrt(1 + (slope*slope)))) + Goal[1]
 
     T.append(xt)
-    T.append(yt) 
+    T.append(yt)
 
 
     if Distance_Calc(Start, D) < Distance_Calc(Start, Goal):
@@ -162,9 +158,6 @@ def pathfinding(obs, Start, Goal):
     print("We are at ", Start)
     print("They are at ", Goal)
     print("Slope is ", slope)
-    #print("We are going to", xd, " and ", yd)
-    #print("Middle of the circle is at ", Circle_X, " and ", Circle_Y)
-    #print("The other is at ", xt, " and ", yt)
     print("Waypoint is ", Waypoint)
     print("Flankpoint is ", Flankpoint)
 
@@ -180,12 +173,12 @@ def pathfinding(obs, Start, Goal):
 def AStar_Algo(obs, Start, Goal):
 
     #Now we do all the agorithm here
-    #Not Implemented, just teting with it 
-    
+    #Not Implemented, just teting with it
+
     #Circle_Y/X are the coordinates for the middle of the circle
-    #Now we can use the formula to see how far off each of these points are from the circle 
-    
-    
+    #Now we can use the formula to see how far off each of these points are from the circle
+
+
     heapOpen = []
     heapClosed = []
     Temp = StateObject()
@@ -222,7 +215,7 @@ def AStar_Algo(obs, Start, Goal):
             Neighbors = Graph(Current.state, shape)
             for n in Neighbors:
                 #There's 3 cases but only took accound for 2 so far
-                
+
                 #print("This is the shape ", shape)
                 Temp = StateObject() #Create the StateObj for heap
                 #Distance from the goal + cost of moving one square
@@ -272,12 +265,39 @@ def A_Star(obs, location, target, flank = False):
     since we are not always going to be at (0,0)'''
 
 
-    #if Distance_Calc(location, target) > 15 and not flank: 
+    #if Distance_Calc(location, target) > 15 and not flank:
         #return AStar_Algo(obs,location, target)
     #elif flank:
     pathfinding(obs, location, target)
     return AStar_Algo(obs,location, target)
 
+
+def arc_position(headon_pos, flanker_pos, enemy_pos, radius, arclength):
+
+    theta_increment = arclength / radius
+
+    headon_slope = (enemy_pos[1] - headon_pos[1]) / (enemy_pos[0] - headon_pos[0])
+    flanker_slope = (enemy_pos[1] - flanker_pos[1]) / (enemy_pos[0] - flanker_pos[0])
+
+    theta_head = math.arctan(headon_slope)
+    theta_flank = math.arctan(flanker_slope)
+
+    theta_total = theta_head - theta_flank
+
+    pos_angle = pi - math.abs(theta_total + theta_increment)
+    neg_angle = pi - math.abs(theta_total - theta_increment)
+
+    if pos_angle < neg_angle:
+        next_theta = theta_flank + theta_increment
+    elif pos_angle > neg_angle:
+        next_theta = theta_flank - theta_increment
+    else:
+        next_theta = theta_flank
+
+    next_x = radius * math.cos(next_theta) + enemy_pos[0]
+    next_y = radius * math.sin(next_theta) + enemy_pos[1]
+
+    return next_x, next_y
 
 
 
