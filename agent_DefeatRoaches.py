@@ -65,14 +65,22 @@ class FlankingAgent(base_agent.BaseAgent):
     def __init__(self, load_qt=None, load_st=None):
         super(FlankingAgent, self).__init__()
         try:
-            self.qtable = QTable(possible_action, load_qt = "qTable.npy", load_st = "qStates.npy")
+            self.qtable = QTable(possible_action, load_qt = None, load_st = None)
         except FileNotFoundError:
             self.qtable = QTable(possible_action)
         self.steps = 0
         self.groups = []
         self.prev_state = None
         self.prev_action = None
+        self.score = 0
 
+    def get_unit_health(self, obs):
+   		unit_hp = obs.observation['feature_units']
+   		total_hp = 0
+   		for unit in unit_hp:
+   			if(unit[1] == _AI_SELF):
+   				total_hp = total_hp+unit[2]
+   		return total_hp
 
     def step(self, obs):
 
@@ -96,7 +104,6 @@ class FlankingAgent(base_agent.BaseAgent):
         #     pprint(obs.observation[each].dtype.names)
         #     pprint("}")
         # exit()
-
         while self.groups:
             # print("WHILE LOOP")
             group = self.groups[0]
@@ -111,6 +118,14 @@ class FlankingAgent(base_agent.BaseAgent):
             if not active:
                 self.groups.pop(0)
                 self.groups.append(group)
+
+            health = self.get_unit_health(obs)
+            score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])-self.score+health
+            self.score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])
+            if not obs.last():
+            	print("Cumm_Score is: {} Current_score is: {}".format(obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5], score))	
+            	self.qtable.update_qtable(
+                group.prev_state, group.state, group.prev_action, score)
 
             return func
 

@@ -88,29 +88,20 @@ class Group():
         self.set = False
         self.initial_unit_coors = unit_locations
         self.flanker = False
+        
 
 
     def do_action(self, obs, qtable, group_queue, do_not_split):
 
-        state, target_pos, current_pos = get_state(obs, self.selected, self.set, self.flanker, group_queue)
+        self.state, target_pos, current_pos = get_state(obs, self.selected, self.set, self.flanker, group_queue)
 
-        self.prev_state = state
-        action = qtable.get_action(state)
+        self.prev_state = self.state
+        action = qtable.get_action(self.state)
         self.prev_action = action
         self.prev_location = current_pos
-        self.moving = state[1]
+        self.moving = self.state[1]
         func = actions.FunctionCall(_NO_OP, [])
         units = get_units(obs)
-
-        # print(state, action, possible_action[action])
-
-        if not obs.last():
-            score = obs.observation['score_cumulative'][3] + \
-                obs.observation['score_cumulative'][5] + \
-                obs.observation['score_cumulative'][0]
-            qtable.update_qtable(
-                self.prev_state, state, self.prev_action, score)
-
         if possible_action[action] not in obs.observation['available_actions']:
             # print("Cannot perform", possible_action[action].name, "right now")
             pass
@@ -167,14 +158,14 @@ class Group():
                 return active, func
             # else: print("    Units were not selected!")
 
-        elif state[3] and possible_action[action] == _SELECT_ARMY:
+        elif self.state[3] and possible_action[action] == _SELECT_ARMY:
             # print("Select entire army")
             func = actions.FunctionCall(_SELECT_ARMY, [_SELECT_ALL])
             deselect(group_queue)
             self.selected = True
             return True, func
 
-        elif not do_not_split and not state[3] and possible_action[action] == _SELECT_RECT:
+        elif not do_not_split and not self.state[3] and possible_action[action] == _SELECT_RECT:
             # print("Select some units from army") # assume that all units are grouped together
             # find the clusters
             #num_clusters, cluster_sets, clusters, len(units[0])
