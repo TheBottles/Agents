@@ -18,5 +18,6 @@ To run the agents on Mac (linux should work too):
 ##### Example
 
         $ python -m pysc2.bin.agent --map DefeatRoaches --agent agent.Agent
+        $ python3 -m pysc2.bin.agent --map DefeatZerglingsAndBanelings --agent agent_DefeatRoaches.FlankingAgent
 
 Note: for this command to work, you must cd into the folder containing the `agent.py` file.
