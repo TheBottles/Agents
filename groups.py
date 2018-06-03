@@ -89,13 +89,30 @@ class Group():
         self.initial_unit_coors = unit_locations
         self.flanker = False
 
+        if self.flanker:
+            self.tablename = "flankerQTable.npy"
+            self.statename = "flankerQState.npy"
+        else:
+            self.tablename = "qTable.npy"
+            self.statename = "qState.npy"
 
-    def do_action(self, obs, qtable, group_queue, do_not_split):
+
+        try:
+            self.qtable = QTable(possible_action, load_qt= self.tablename, load_st = self.statename)
+        except FileNotFoundError:
+            self.qtable = QTable(possible_action)
+
+    def update_tables(self):
+        self.qtable.save_qtable(self.tablename)
+        self.qtable.save_states(self.statename)
+
+
+    def do_action(self, obs, group_queue, do_not_split):
 
         state, target_pos, current_pos = get_state(obs, self.selected, self.set, self.flanker, group_queue)
 
         self.prev_state = state
-        action = qtable.get_action(state)
+        action = self.qtable.get_action(state)
         self.prev_action = action
         self.prev_location = current_pos
         self.moving = state[1]
@@ -108,8 +125,8 @@ class Group():
             score = obs.observation['score_cumulative'][3] + \
                 obs.observation['score_cumulative'][5] + \
                 obs.observation['score_cumulative'][0]
-            qtable.update_qtable(
-                self.prev_state, state, self.prev_action, score)
+        elif obs.last():
+            self.update_tables()
 
         if possible_action[action] not in obs.observation['available_actions']:
             # print("Cannot perform", possible_action[action].name, "right now")

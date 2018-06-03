@@ -64,10 +64,6 @@ possible_action = [
 class FlankingAgent(base_agent.BaseAgent):
     def __init__(self, load_qt=None, load_st=None):
         super(FlankingAgent, self).__init__()
-        try:
-            self.qtable = QTable(possible_action, load_qt = "qTable.npy", load_st = "qStates.npy")
-        except FileNotFoundError:
-            self.qtable = QTable(possible_action)
         self.steps = 0
         self.groups = []
         self.prev_state = None
@@ -85,8 +81,8 @@ class FlankingAgent(base_agent.BaseAgent):
             self.groups[0].control_id = 0
             self.group_died = False
         elif obs.last():
-            self.qtable.save_qtable('qTable')
-            self.qtable.save_states('qStates')
+            for subagent in self.groups:
+                subagent.update_tables()
 
         # pprint(obs.observation)
 
@@ -106,7 +102,7 @@ class FlankingAgent(base_agent.BaseAgent):
                 self.group_died = True
                 continue
 
-            active, func = group.do_action(obs, self.qtable, self.groups, self.group_died)
+            active, func = group.do_action(obs, self.groups, self.group_died)
 
             if not active:
                 self.groups.pop(0)
