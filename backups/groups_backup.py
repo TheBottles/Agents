@@ -12,7 +12,7 @@ from s2clientprotocol import raw_pb2 as sc_raw
 from s2clientprotocol import sc2api_pb2 as sc_pb
 from pprint import pprint
 from coordgrabber import *
-from AStar2 import A_Star, arc_position
+from pathfinder import a_star, arc_position
 
 
 from unitselection import *
@@ -154,7 +154,7 @@ class Group():
             if not self.flanker:
                 print(self.control_id, "is not the flanking group")
                 pass
-            elif Distance_Calc(enemy_pos, self.prev_location) > 15:
+            elif distance(enemy_pos, self.prev_location) > 15:
                 print(self.control_id, "is too far to flank")
                 pass
 
@@ -174,7 +174,7 @@ class Group():
             if self.selected:
                 # assume units are already selected here
                 print("    DO A* AND ATTACK")
-                target_x, target_y = A_Star(obs, current_pos, target_pos)
+                target_x, target_y = a_star(obs, current_pos, target_pos)
                 # target_x, target_y = target_pos
 
                 if (target_x, target_y) == target_pos:

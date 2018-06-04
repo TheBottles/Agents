@@ -12,7 +12,7 @@ from s2clientprotocol import raw_pb2 as sc_raw
 from s2clientprotocol import sc2api_pb2 as sc_pb
 from pprint import pprint
 from coordgrabber import *
-from AStar2 import A_Star
+from pathfinder import a_star
 from unitselection import *
 
 from random import randint
@@ -46,13 +46,13 @@ def get_flank_coords(obs, flanker):
     # if
     if labelx > labely:
         # Our group units are closer to the top of the enemy units
-        if Distance_Calc(loc, (targetxs[ymin], targetys[ymin])) < Distance_Calc(loc, (targetxs[ymax], targetys[ymax])):
+        if distance(loc, (targetxs[ymin], targetys[ymin])) < distance(loc, (targetxs[ymax], targetys[ymax])):
             target = targetxs[ymin], targetys[ymin]
         # Our group units are closer to the bottom of the enemy units
         else: target =  targetxs[ymax], targetys[ymax]
     else:
 
-        if Distance_Calc(loc, (targetxs[xmin], targetys[xmin])) < Distance_Calc(loc, (targetxs[xmax], targetys[xmax])):
+        if distance(loc, (targetxs[xmin], targetys[xmin])) < distance(loc, (targetxs[xmax], targetys[xmax])):
             target =  targetxs[xmin], targetys[xmin]
         else: target =  targetxs[xmax], targetys[xmax]
     #

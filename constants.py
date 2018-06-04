@@ -1,25 +1,24 @@
 from pysc2.lib import actions
 from pysc2.lib import features
-from pysc2.lib.actions import Function
 
-_AI_RELATIVE        = features.SCREEN_FEATURES.player_relative.index
-_AI_SELECTED        = features.SCREEN_FEATURES.selected.index
-_NO_OP_ID           = actions.FUNCTIONS.no_op.id
-_ATTACK_SCREEN_ID   = actions.FUNCTIONS.Attack_screen.id
-_MOVE_SCREEN_ID     = actions.FUNCTIONS.Move_screen.id
-_SELECT_ARMY_ID     = actions.FUNCTIONS.select_army.id
-_SELECT_POINT_ID    = actions.FUNCTIONS.select_point.id
-_SELECT_RECT_ID     = actions.FUNCTIONS.select_rect.id
-_CONTROL_GROUP_ID   = actions.FUNCTIONS.select_control_group.id
-_BACKGROUND = 0
-_AI_SELF    = 1
-_AI_ALLIES  = 2
-_AI_NEUTRAL = 3
-_AI_HOSTILE = 4
-_SELECT_ALL = [0]
-_NOT_QUEUED = [0]
-_QUEUED     = [1]
-_SET_GROUP  = [1]
+AI_RELATIVE        = features.SCREEN_FEATURES.player_relative.index
+AI_SELECTED        = features.SCREEN_FEATURES.selected.index
+NO_OP_ID           = actions.FUNCTIONS.no_op.id
+ATTACK_SCREEN_ID   = actions.FUNCTIONS.Attack_screen.id
+MOVE_SCREEN_ID     = actions.FUNCTIONS.Move_screen.id
+SELECT_ARMY_ID     = actions.FUNCTIONS.select_army.id
+SELECT_POINT_ID    = actions.FUNCTIONS.select_point.id
+SELECT_RECT_ID     = actions.FUNCTIONS.select_rect.id
+CONTROL_GROUP_ID   = actions.FUNCTIONS.select_control_group.id
+BACKGROUND = 0
+AI_SELF    = 1
+AI_ALLIES  = 2
+AI_NEUTRAL = 3
+AI_HOSTILE = 4
+SELECT_ALL = [0]
+NOT_QUEUED = [0]
+QUEUED     = [1]
+SET_GROUP  = [1]
 
 """
     Actual possible set of actions:
@@ -36,31 +35,31 @@ _SET_GROUP  = [1]
 THRESH = 15
 
 # Custom Moves
-_NO_OP          = 0000
-_SELECT_UNITS   = 1000
-_SET_CONTROL    = 2000
-_SELECT_CONTROL = 3000
-_MOVE_TO_TARGET = 4000
-_FLANK_TARGET   = 5000
-_ATTACK_TARGET  = 6000
+NO_OP          = 0000
+SELECT_UNITS   = 1000
+SET_CONTROL    = 2000
+SELECT_CONTROL = 3000
+MOVE_TO_TARGET = 4000
+FLANK_TARGET   = 5000
+ATTACK_TARGET  = 6000
 
 
 moves = {
-    _SELECT_UNITS   : _SELECT_RECT_ID,
-    _SET_CONTROL    : _CONTROL_GROUP_ID,
-    _SELECT_CONTROL : _CONTROL_GROUP_ID,
-    _MOVE_TO_TARGET : _MOVE_SCREEN_ID,
-    _FLANK_TARGET   : _MOVE_SCREEN_ID,
-    _ATTACK_TARGET  : _ATTACK_SCREEN_ID,
-    _NO_OP          : _NO_OP_ID,
+    SELECT_UNITS   : SELECT_RECT_ID,
+    SET_CONTROL    : CONTROL_GROUP_ID,
+    SELECT_CONTROL : CONTROL_GROUP_ID,
+    MOVE_TO_TARGET : MOVE_SCREEN_ID,
+    FLANK_TARGET   : MOVE_SCREEN_ID,
+    ATTACK_TARGET  : ATTACK_SCREEN_ID,
+    NO_OP          : NO_OP_ID,
 }
 
 possible_action = [
-    _SELECT_UNITS,
-    _SET_CONTROL,
-    _SELECT_CONTROL,
-    _MOVE_TO_TARGET,
-    _FLANK_TARGET,
-    _ATTACK_TARGET,
-    _NO_OP,
+    SELECT_UNITS,
+    SET_CONTROL,
+    SELECT_CONTROL,
+    MOVE_TO_TARGET,
+    FLANK_TARGET,
+    ATTACK_TARGET,
+    NO_OP,
 ]

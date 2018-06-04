@@ -1,4 +1,3 @@
-import collections
 import math
 import numpy as np
 
@@ -7,24 +6,23 @@ import unitselection
 
 
 def get_state(obs, this_group, groups):
-
     # State information about the state of the game
     all_units = unitselection.get_units(obs)
-    hostile_present = len(unitselection.get_alliance_units(all_units,constants._AI_HOSTILE)) > 0
+    hostile_present = len(unitselection.get_alliance_units(all_units, constants.AI_HOSTILE)) > 0
 
     # State information about all groups
-    multigroup  = len(groups) > 1
-    teams_ready = True              # Are the other teams ready?
-    for group in groups[1:]:        # First group is this_group, do not check
+    multigroup = len(groups) > 1
+    teams_ready = True  # Are the other teams ready?
+    for group in groups[1:]:  # First group is this_group, do not check
         if not group.in_position:
             teams_ready = False
             break
 
     # State information about this particular group
-    flanker     = this_group.flanker
-    ready       = this_group.in_position
-    selected    = this_group.selected
-    set         = this_group.set
+    flanker = this_group.flanker
+    ready = this_group.in_position
+    selected = this_group.selected
+    set = this_group.set
     initialized = bool(this_group.initial_unit_coors)
 
     state = tuple((hostile_present, multigroup, initialized, teams_ready, flanker, ready, selected, set))
@@ -38,8 +36,10 @@ EPS_START = 0.9
 EPS_END = 0.025
 EPS_DECAY = 2500
 
+
 def get_eps_threshold(steps_done):
     return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
+
 
 class QTable(object):
     def __init__(self, actions, lr=0.01, reward_decay=0.9, load_qt=None, load_st=None):
@@ -91,13 +91,14 @@ class QTable(object):
         print(self.q_table.shape)
 
     def save_qtable(self, filepath):
-        np.save(filepath, self.q_table)
+        temp = np.array(list(self.q_table))
+        np.save(filepath, temp)
 
     def load_qtable(self, filepath):
         return np.load(filepath)
 
     def save_states(self, filepath):
-        temp = np.array(self.states_list)
+        temp = np.array(list(self.states_list))
         np.save(filepath, temp)
 
     def load_states(self, filepath):
@@ -106,10 +107,12 @@ class QTable(object):
 
 """ This portion was written by The Bottles """
 
+
 class ModifiedQTable(QTable):
     def __init__(self, actions, lr=0.01, reward_decay=0.9, load_qt=None, load_st=None):
-        super(ModifiedQTable, self).__init__(actions, lr=0.01, reward_decay=0.9, load_qt=None, load_st=None)
+        super(ModifiedQTable, self).__init__(actions, lr=lr, reward_decay=reward_decay, load_qt=load_qt, load_st=load_st)
 
     def bad_action(self, state, action):
         # print("Not a valid action for this state")
-        self.update_qtable(state, -99999, action, -99999)
+        bad = tuple((-1, -1, -1, -1, -1, -1, -1, -1))
+        self.update_qtable(state, bad, action, -9999)
