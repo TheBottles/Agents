@@ -237,16 +237,13 @@ def arc_position(headon_pos, flanker_pos, enemy_pos, radius, arclength):
 
     theta_increment = arclength / radius
 
-    headon_slope = (enemy_pos[1] - headon_pos[1]) / (enemy_pos[0] - headon_pos[0])
-    flanker_slope = (enemy_pos[1] - flanker_pos[1]) / (enemy_pos[0] - flanker_pos[0])
-
-    theta_head = math.arctan(headon_slope)
-    theta_flank = math.arctan(flanker_slope)
+    theta_head  = math.atan2(enemy_pos[1] -  headon_pos[1], enemy_pos[0] -  headon_pos[0])
+    theta_flank = math.atan2(enemy_pos[1] - flanker_pos[1], enemy_pos[0] - flanker_pos[0] )
 
     theta_total = theta_head - theta_flank
 
-    pos_angle = pi - math.abs(theta_total + theta_increment)
-    neg_angle = pi - math.abs(theta_total - theta_increment)
+    pos_angle = PI - abs(theta_total + theta_increment)
+    neg_angle = PI - abs(theta_total - theta_increment)
 
     if pos_angle < neg_angle:
         next_theta = theta_flank + theta_increment

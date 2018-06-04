@@ -17,50 +17,9 @@ from unitselection import *
 
 from random import randint
 
+from constants import *
+
 np.set_printoptions(threshold=np.nan)
-
-
-# np.set_printoptions(suppress=True)
-
-_AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
-_AI_SELECTED = features.SCREEN_FEATURES.selected.index
-_NO_OP = actions.FUNCTIONS.no_op.id
-_ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
-_MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
-_SELECT_ARMY = actions.FUNCTIONS.select_army.id
-_SELECT_POINT = actions.FUNCTIONS.select_point.id
-_SELECT_RECT = actions.FUNCTIONS.select_rect.id
-_CONTROL_GROUP = actions.FUNCTIONS.select_control_group.id
-_MOVE_RAND = 1000
-_MOVE_MIDDLE = 2000
-_BACKGROUND = 0
-_AI_SELF = 1
-_AI_ALLIES = 2
-_AI_NEUTRAL = 3
-_AI_HOSTILE = 4
-_SELECT_ALL = [0]
-_NOT_QUEUED = [0]
-_SET_GROUP = [1]
-EPS_START = 0.9
-EPS_END = 0.025
-EPS_DECAY = 2500
-steps = 0
-
-_FLANK_ENEMY = 9999
-
-possible_action = [
-    _NO_OP,
-    # _SELECT_ARMY,
-    # _SELECT_POINT,
-    _CONTROL_GROUP,
-    _SELECT_RECT,
-    _ATTACK_SCREEN,
-    # _MOVE_RAND,
-    # _MOVE_MIDDLE,
-    # _MOVE_SCREEN,
-    _FLANK_ENEMY,
-]
-
 
 def get_flank_coords(obs, flanker):
     # Todo: handle case when there are no enemy coordiantes
@@ -98,13 +57,10 @@ def get_flank_coords(obs, flanker):
         else: target =  targetxs[xmax], targetys[xmax]
     #
     # print("Target:", target)
-    # 
+    #
     # for x,y in zip(targetxs, targetys):
     #     print("    ", x,y)
     return target
-
-def get_eps_threshold(steps_done):
-    return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
 
 def get_state(obs, selected = False, controlled = False, flanker = False, groups = []):
     """ Takes in an observation
@@ -131,6 +87,8 @@ def get_state(obs, selected = False, controlled = False, flanker = False, groups
 
     return (enemy, selected, int(marine_on_target), multiple, controlled, flanker), [targetxs, targetys], (marinex, mariney)
 
+def get_eps_threshold(steps_done):
+    return EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
 
 class QTable(object):
     def __init__(self, actions, lr=0.01, reward_decay=0.9, load_qt=None, load_st=None):
@@ -151,7 +109,6 @@ class QTable(object):
 
     def get_action(self, state):
         if not self.load_qt and np.random.rand() < get_eps_threshold(steps):
-            # currently arbitrarily picks an action if the state does not already exist
             return np.random.randint(0, len(self.actions))
         else:
             if state not in self.states_list:

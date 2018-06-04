@@ -20,44 +20,7 @@ from groups import *
 np.set_printoptions(threshold=np.nan)
 
 
-_AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
-_AI_SELECTED = features.SCREEN_FEATURES.selected.index
-_NO_OP = actions.FUNCTIONS.no_op.id
-_ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
-_MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
-_SELECT_ARMY = actions.FUNCTIONS.select_army.id
-_SELECT_POINT = actions.FUNCTIONS.select_point.id
-_SELECT_RECT = actions.FUNCTIONS.select_rect.id
-_CONTROL_GROUP = actions.FUNCTIONS.select_control_group.id
-_MOVE_RAND = 1000
-_MOVE_MIDDLE = 2000
-_BACKGROUND = 0
-_AI_SELF = 1
-_AI_ALLIES = 2
-_AI_NEUTRAL = 3
-_AI_HOSTILE = 4
-_SELECT_ALL = [0]
-_NOT_QUEUED = [0]
-_SET_GROUP = [1]
-EPS_START = 0.9
-EPS_END = 0.025
-EPS_DECAY = 2500
-steps = 0
-
-_FLANK_ENEMY = 9999
-
-possible_action = [
-    _NO_OP,
-    # _SELECT_ARMY,
-    # _SELECT_POINT,
-    _CONTROL_GROUP,
-    _SELECT_RECT,
-    _ATTACK_SCREEN,
-    # _MOVE_RAND,
-    # _MOVE_MIDDLE,
-    # _MOVE_SCREEN,
-    _FLANK_ENEMY,
-]
+from constants import _AI_HOSTILE, _NO_OP_ID, _AI_SELF
 
 class FlankingAgent(base_agent.BaseAgent):
     def __init__(self, load_qt=None, load_st=None):
@@ -81,6 +44,10 @@ class FlankingAgent(base_agent.BaseAgent):
         '''Step function gets called automatically by pysc2 environment'''
         super(FlankingAgent, self).step(obs)
 
+        # print(obs.observation['control_groups'])
+
+        self.steps += 1
+
         if obs.first():
             self.groups = []
             self.groups.append(Group())
@@ -89,28 +56,22 @@ class FlankingAgent(base_agent.BaseAgent):
             for subagent in self.groups:
                 subagent.update_tables()
 
-        # pprint(obs.observation)
-
-        # for each in obs.observation.keys():
-        #     pprint("{")
-        #     pprint("'" +each + "' :")
-        #     pprint(obs.observation[each].dtype.names)
-        #     pprint("}")
-        # exit()
         while self.groups:
             # print("WHILE LOOP")
             hostile_health = self.get_unit_health(obs, _AI_HOSTILE)
-            step_score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])- self.score - hostile_health
+            ai_health = self.get_unit_health(obs, _AI_SELF)
+
+            step_score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])- self.score - (2 * hostile_health) + ai_health
             self.score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])
 
             group = self.groups[0]
 
-            # if group.set and obs.observation['control_groups'][group.control_id][0] == 0:
-            #     self.groups.pop(0)
-            #     self.group_died = True
-            #     continue
+            if group.set and obs.observation['control_groups'][group.id][0] == 0:
+                self.groups.pop(0)
+                group.group_died = True
+                continue
 
-            active, func = group.do_action(obs, step_score, self.groups)
+            active, func = group.do_action(obs, step_score, self.groups, self.steps)
 
             if not active:
                 self.groups.pop(0)
@@ -118,4 +79,7 @@ class FlankingAgent(base_agent.BaseAgent):
 
             return func
 
-        return actions.FunctionCall(_NO_OP, [])
+        self.groups.append(Group())
+        self.groups[0].control_id = 0
+
+        return actions.FunctionCall(_NO_OP_ID, [])
