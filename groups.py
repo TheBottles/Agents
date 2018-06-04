@@ -41,6 +41,8 @@ class Group():
         self.moving             = False
         self.target             = None
 
+        self.moves              = []
+
         self.bad = True
 
         if self.flanker:
@@ -55,6 +57,16 @@ class Group():
                 possible_action, load_qt=self.tablename, load_st=self.statename)
         except FileNotFoundError:
             self.qtable = QTable(possible_action)
+
+    def apply_rewards(self, reward):
+            for i in range(len(self.moves) - 1):
+                prev_state = self.moves[i][0]
+                next_state = self.moves[i+1][0]
+                action = self.moves[i][1]
+                print(prev_state, next_state, action)
+                self.qtable.update_qtable(
+                    prev_state, next_state, action, reward)
+
 
     def update_tables(self):
         self.qtable.save_qtable(self.tablename)
@@ -82,9 +94,9 @@ class Group():
         action_key = self.qtable.get_action(state, steps)
         action = possible_action[action_key]
 
-        if not obs.last() and not obs.first():
-            self.qtable.update_qtable(
-                self.prev_state, state, self.prev_action, score)
+        # if not obs.last() and not obs.first():
+        #     self.qtable.update_qtable(
+        #         self.prev_state, state, self.prev_action, score)
 
         while moves[action] not in obs.observation['available_actions']:
             self.qtable.bad_action(state, action_key)
@@ -183,18 +195,21 @@ class Group():
         elif action == _MOVE_TO_TARGET:
             """ Use A* to move toward the direction of a target """
 
-            if not self.set or not self.selected or not state[1]:
+            if not self.set or not self.selected:
                 self.qtable.bad_action(state, action_key)
                 return active, func
 
             next_pos = A_Star(obs, position, target)
-            active = True
-            func = actions.FunctionCall(_MOVE_SCREEN_ID, [_QUEUED, next_pos])
 
-            if next_pos == target:
+            if Distance_Calc(next_pos,  target) < radius:
                 active = False
+                self.in_position = True
+
             self.moving = True
             self.target = target
+
+            active = True
+            func = actions.FunctionCall(_MOVE_SCREEN_ID, [_NOT_QUEUED, next_pos])
 
 
         elif action == _FLANK_TARGET:
@@ -205,26 +220,31 @@ class Group():
                 return active, func
 
             next_pos = arc_position(group_queue[1].prev_location, position, target, radius, THRESH)
-            active = True
-            func = actions.FunctionCall(_ATTACK_SCREEN_ID, [_QUEUED, next_pos])
 
             if next_pos == target:
                 active = False
+                self.in_position = True
+
             self.moving = True
             self.target = target
+
+            active = True
+            func = actions.FunctionCall(_ATTACK_SCREEN_ID, [_NOT_QUEUED, next_pos])
 
 
         elif action == _ATTACK_TARGET:
             """ Attack the enemy by going in a stright line """
 
-            if not self.set or not self.selected or not self.in_position:
+            if not self.set or not self.selected:
                 self.qtable.bad_action(state, action_key)
                 return active, func
             next_pos = A_Star(obs, position, target)
-            active = False
-            func = actions.FunctionCall(_ATTACK_SCREEN_ID, [_QUEUED, next_pos])
+
             self.moving = True
             self.target = target
+
+            active = False
+            func = actions.FunctionCall(_ATTACK_SCREEN_ID, [_NOT_QUEUED, next_pos])
 
 
         elif action == _NO_OP:
@@ -239,13 +259,15 @@ class Group():
             if teams_ready or not self.in_position:
                 self.qtable.bad_action(state, action_key)
 
-            return False, func
+            active = False
 
         self.prev_state = state
         self.prev_location = position
         self.prev_action = action_key
 
         # print(active, func)
+
+        self.moves.append([state, action_key])
 
         return active, func
 

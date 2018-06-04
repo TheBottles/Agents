@@ -1,7 +1,6 @@
 from pysc2.lib import actions
 from pysc2.lib import features
 from pysc2.lib.actions import Function
-from collections import namedtuple
 
 _AI_RELATIVE        = features.SCREEN_FEATURES.player_relative.index
 _AI_SELECTED        = features.SCREEN_FEATURES.selected.index

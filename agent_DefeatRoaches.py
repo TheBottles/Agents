@@ -13,7 +13,6 @@ from s2clientprotocol import sc2api_pb2 as sc_pb
 from pprint import pprint
 from coordgrabber import *
 from AStar2 import A_Star
-from qtable import *
 from unitselection import *
 from groups import *
 
@@ -48,13 +47,14 @@ class FlankingAgent(base_agent.BaseAgent):
 
         self.steps += 1
 
-        if obs.first():
+        if obs.last():
+            for subagent in self.groups:
+                subagent.apply_rewards(obs.reward)
+                subagent.update_tables()
+            print(obs.reward)
             self.groups = []
             self.groups.append(Group())
             self.groups[0].control_id = 0
-        elif obs.last():
-            for subagent in self.groups:
-                subagent.update_tables()
 
         while self.groups:
             # print("WHILE LOOP")
