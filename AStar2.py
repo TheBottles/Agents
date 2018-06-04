@@ -84,33 +84,6 @@ def Graph(location, shape):
         goto.append(n)
     # explored.update(set(goto))
     return goto
-'''Function that makes list of circle points
-def getCirclePoints(Point_One, Point_Two):
-    points = []
-    Circle_X = int((Point_one[0] + Point_Two[0])/2)
-    Circle_Y = int((Point_One[1] + Point_Two[1])/2)
-
-    temp1 = math.pow((Point_One[0] - Point_Two[0]),2)
-    temp2 = math.pow((Point_One[1] - Point_Two[1]),2)
-    radius = math.sqrt(temp1 + temp2)
-
-    return points
-'''
-#Leave this in case we need it
-
-'''Check what the point gives when we plug it into the circle function'''
-def circleEquation(r, Cx, Cy, Point):
-    resultOne = Point[0] - Cx
-    resultOne = math.pow(resultOne, 2)
-
-    resultTwo = Point[1] - Cy
-    resultTwo = math.pow(resultTwo, 2)
-
-    Total = resultOne + resultTwo
-
-    #Maybe this could be the cost
-    Diff  = r - Total
-    return Diff
 
 
 def dubins(obs, Start, Goal):
@@ -160,13 +133,6 @@ def dubins(obs, Start, Goal):
     print("Slope is ", slope)
     print("Waypoint is ", Waypoint)
     print("Flankpoint is ", Flankpoint)
-
-
-
-
-
-
-
 
 
 '''A* implementation using the class slides'''
@@ -253,12 +219,7 @@ def AStar_Algo(obs, Start, Goal):
         return Goal
 
 
-'''For this algorithm we start at a "start" point and a "finish" point.
-We then make a dictionary that represents the "graph" that is the map.
-Each key in the dictionary is a tuple that represents a point and the value
-for each key is a tuple of tuples that represents all the other points
-that the current key connects to.'''
-def A_Star(obs, location, target, flank = False):
+def A_Star(obs, location, target, flank = False, head_unit = None):
     #Account for the negative parts of the graph
     '''For the sake of implementation I started with 0,0
     but this will change based on where in the map we are
@@ -268,7 +229,7 @@ def A_Star(obs, location, target, flank = False):
     #if Distance_Calc(location, target) > 15 and not flank:
         #return AStar_Algo(obs,location, target)
     #elif flank:
-    pathfinding(obs, location, target)
+    # pathfinding(obs, location, target)
     return AStar_Algo(obs,location, target)
 
 
