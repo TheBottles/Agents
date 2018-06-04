@@ -148,6 +148,12 @@ class Group():
                     constants.SELECT_RECT_ID, [constants.SELECT_ALL, max_coords, min_coords])
                 active = True
 
+            # else:
+            #     self.selected = True
+            #     func = actions.FunctionCall(
+            #         constants.SELECT_ARMY_ID, [constants.SELECT_ALL])
+            #     active = True
+
         elif action == constants.SET_CONTROL:
             """ Set the currently selected units as a control group """
 
@@ -186,7 +192,7 @@ class Group():
         elif action == constants.MOVE_TO_TARGET:
             """ Use A* to move toward the direction of a target """
 
-            if not self.set or not self.selected:
+            if not self.set or not self.selected or not state[1]:
                 self.qtable.bad_action(state, action_key)
                 return active, func
 
@@ -224,7 +230,7 @@ class Group():
         elif action == constants.ATTACK_TARGET:
             """ Attack the enemy by going in a stright line """
 
-            if not self.set or not self.selected:
+            if not self.set or not self.selected or not state[1]:
                 self.qtable.bad_action(state, action_key)
                 return active, func
             next_pos = pathfinder.a_star(obs, position, target)
