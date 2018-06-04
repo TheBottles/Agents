@@ -1,64 +1,15 @@
-import math
-import numpy as np
-from pysc2.agents import base_agent
 from pysc2.lib import actions
-from pysc2.lib import features
-from pysc2.env import sc2_env, run_loop, available_actions_printer
-from pysc2 import maps
-from absl import flags
-import os
-import time
-from s2clientprotocol import raw_pb2 as sc_raw
-from s2clientprotocol import sc2api_pb2 as sc_pb
-from pprint import pprint
-from coordgrabber import *
+import numpy as np
+
+from constants import _SELECT_UNITS, _SET_CONTROL, _SELECT_CONTROL, _MOVE_TO_TARGET, _FLANK_TARGET, _ATTACK_TARGET, _NO_OP
+from constants import possible_action, moves
+from constants import  _SELECT_ALL, _NOT_QUEUED, _SET_GROUP, _AI_SELF, _AI_HOSTILE, _QUEUED
+from constants import _SELECT_RECT_ID, _CONTROL_GROUP_ID,_MOVE_SCREEN_ID, _ATTACK_SCREEN_ID, _NO_OP_ID
+from constants import THRESH
+from coordgrabber import Distance_Calc
+import state_machine
+import unitselection
 from AStar2 import A_Star, arc_position
-from qtable import *
-from unitselection import *
-
-from RoachesAndHydrolisks import RoachesAndHydrolisks
-
-map = RoachesAndHydrolisks()
-
-_AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
-_AI_SELECTED = features.SCREEN_FEATURES.selected.index
-_NO_OP = actions.FUNCTIONS.no_op.id
-_ATTACK_SCREEN = actions.FUNCTIONS.Attack_screen.id
-_MOVE_SCREEN = actions.FUNCTIONS.Move_screen.id
-_SELECT_ARMY = actions.FUNCTIONS.select_army.id
-_SELECT_POINT = actions.FUNCTIONS.select_point.id
-_SELECT_RECT = actions.FUNCTIONS.select_rect.id
-_CONTROL_GROUP = actions.FUNCTIONS.select_control_group.id
-_MOVE_RAND = 1000
-_MOVE_MIDDLE = 2000
-_BACKGROUND = 0
-_AI_SELF = 1
-_AI_ALLIES = 2
-_AI_NEUTRAL = 3
-_AI_HOSTILE = 4
-_SELECT_ALL = [0]
-_NOT_QUEUED = [0]
-_SET_GROUP = [1]
-EPS_START = 0.9
-EPS_END = 0.025
-EPS_DECAY = 2500
-steps = 0
-
-_FLANK_ENEMY = 9999
-
-possible_action = [
-    _NO_OP,
-    # _SELECT_ARMY,
-    # _SELECT_POINT,
-    _CONTROL_GROUP,
-    _SELECT_RECT,
-    _ATTACK_SCREEN,
-    # _MOVE_RAND,
-    # _MOVE_MIDDLE,
-    # _MOVE_SCREEN,
-    _FLANK_ENEMY,
-]
-
 
 def get_next_id(obs):
     groups = obs.observation['control_groups']
@@ -73,25 +24,22 @@ def deselect(group_queue):
     for group in group_queue:
         group.selected = False
 
-
 class Group():
 
     def __init__(self, location=None, unit_locations=None):
-        self.moving = False
-        self.selected = False
-        self.target = None
 
-        self.prev_state = None
-        self.prev_action = None
-        self.prev_location = location
+        self.prev_state         = None
+        self.prev_action        = None
+        self.prev_location      = location
 
-        self.control_id = None
-        self.set = False
+        self.flanker            = False
+        self.id                 = None
+        self.in_position        = False
         self.initial_unit_coors = unit_locations
-        self.flanker = False
-
-
-        self.group_died = False
+        self.selected           = False
+        self.set                = False
+        self.moving             = False
+        self.target             = None
 
         self.bad = True
 
@@ -103,7 +51,7 @@ class Group():
             self.statename = "qState.npy"
 
         try:
-            self.qtable = QTable(
+            self.qtable = state_machine.ModifiedQTable(
                 possible_action, load_qt=self.tablename, load_st=self.statename)
         except FileNotFoundError:
             self.qtable = QTable(possible_action)
@@ -112,174 +60,232 @@ class Group():
         self.qtable.save_qtable(self.tablename)
         self.qtable.save_states(self.statename)
 
-    def do_action(self, obs, score, group_queue):
+    def do_action(self, obs, score, group_queue, steps):
 
-        state, target_pos, current_pos = get_state(
-            obs, self.selected, self.set, self.flanker, group_queue)
+        all_units = unitselection.get_units(obs)
 
-        self.prev_state = state
-        action = self.qtable.get_action(state)
-        self.prev_action = action
-        self.prev_location = current_pos
-        self.moving = state[1]
-        func = actions.FunctionCall(_NO_OP, [])
-        units = get_units(obs)
 
-        # print(action)
-        # print(score)
+        target, radius = generate_target(obs, self)
+        position = tuple(unitselection.get_unit_coors(all_units, _AI_SELF).mean(axis = 1))
 
-        if self.set and obs.observation['control_groups'][self.control_id][0] == 0:
-            self.group_died = True
+        if Distance_Calc(target, position) < radius:
+            self.in_position = True
+        else:
+            self.in_position = False
 
-        if self.group_died:
-            return False, func
+        if self.target == position:
+            self.moving = False
+        elif position is not self.prev_location:
+            self.moving = True
 
-        if not obs.last():
-            score_sum = score
-            if self.bad:
-                score_sum -= 1000
+        state = state_machine.get_state(obs, self, group_queue)
+        action_key = self.qtable.get_action(state, steps)
+        action = possible_action[action_key]
+
+        if not obs.last() and not obs.first():
             self.qtable.update_qtable(
                 self.prev_state, state, self.prev_action, score)
 
-        self.bad = False
+        while moves[action] not in obs.observation['available_actions']:
+            self.qtable.bad_action(state, action_key)
+            action_key = self.qtable.get_action(state, steps)
+            action = possible_action[action_key]
 
+        active = False
+        func = actions.FunctionCall(_NO_OP, [])
 
+        # print(state, action)
 
-        if not possible_action[action] == _FLANK_ENEMY and possible_action[action] not in obs.observation['available_actions']:
-            # print(action)
-            print("Cannot perform", possible_action[action].name, "right now")
-            pass
-        elif possible_action[action] == _FLANK_ENEMY and _MOVE_SCREEN not in obs.observation['available_actions']:
-            print("Cannot perform flank right now")
-            pass
-        elif possible_action[action] == _CONTROL_GROUP:
-            print("Controlling group", self.control_id)
+        if action == _SELECT_UNITS:
+            """ Select half of our AI units and split groups """
 
-            if not self.selected and not self.set:
-                print("    Select unset units")
-                if not self.initial_unit_coors:
-                    print("        Cannot initialize units from null list")
-                    pass
-                else:
-                    max_coords = tuple(np.max(self.initial_unit_coors, axis=0))
-                    # get the lowest x and y points from our group1
-                    min_coords = tuple(np.min(self.initial_unit_coors, axis=0))
-                    func = actions.FunctionCall(
-                        _SELECT_RECT, [_SELECT_ALL, max_coords, min_coords])
-                    deselect(group_queue)
-                    self.selected = True
-                    return True, func
+            if self.set or state[1] or self.selected:
+                self.qtable.bad_action(state, action_key)
+                return active, func
 
-            elif self.selected and not self.set:
-                print("    Set control group")
-                self.control_id = get_next_id(obs)
-                func = actions.FunctionCall(
-                    _CONTROL_GROUP, [_SET_GROUP, [self.control_id]])
-                self.set = True
-                return True, func
+            # Locate our AI units
+            location = unitselection.get_unit_coors(all_units, _AI_SELF)
+            # print(location)
 
-            elif self.set and not self.selected:
-                print("    Select control group")
-                func = actions.FunctionCall(
-                    _CONTROL_GROUP, [_SELECT_ALL, [self.control_id]])
+            # Divide units
+            group1, group2 = unitselection.group_splitter(location, 1)
+            # print(group1)
+            # print(group2)
+
+            if len(group1) > 0 and len(group2) > 0:
+
+                # generate a new group with last known location
+                g2_mean = tuple(np.mean(group2, axis=0))
+                g1_mean = tuple(np.mean(group1, axis=0))
+                # print(g1_mean)
+
+                newGroup = Group(g2_mean, group2)
+                newGroup.flanker = True
+
+                # enqueue  the new group into the queue
+                group_queue.append(newGroup)
+                # get our group location
+                self.prev_location = g1_mean
+
                 deselect(group_queue)
                 self.selected = True
-                return True, func
+                # return selection
 
-            else:
-                print(
-                    "    Units set and selected, but trying to control group, need to move or attack instead")
-
-        elif possible_action[action] == _FLANK_ENEMY:
-            print("Attempting to flank")
-            units = get_units(obs)
-            enemy_pos= get_unit_coors(units, _AI_HOSTILE).mean(axis = 1)
-
-            assert(len(enemy_pos) == 2)
-
-            if Distance_Calc(enemy_pos, self.prev_location) > 15:
-                print(self.control_id, "is too far to flank")
-                pass
-            elif not self.flanker:
-                print(self.control_id, "is not the flanking group")
-                pass
-            elif group_queue <= 1:
-                print(self.control_id, "not enough units to flank")
-                pass
-            else:
-                headon_pos = group_queue[1].prev_location
-                waypoint_x, waypoint_y = arc_position(
-                    headon_pos, self.prev_location, enemy_pos, 15, 5)
-
-                func = actions.FunctionCall(_MOVE_SCREEN, [_NOT_QUEUED, [waypoint_x, waypoint_y]])
-                return False, func
-
-        elif possible_action[action] == _ATTACK_SCREEN:
-            print("Attempting to move or attack")
-            if self.selected:
-                # assume units are already selected here
-                print("    DO A* AND ATTACK")
-                target_x, target_y = A_Star(obs, current_pos, target_pos)
-                # target_x, target_y = target_pos
-
-                if (target_x, target_y) == target_pos:
-                    TYPE_MOVE = _ATTACK_SCREEN
-                    active = False
-                else:
-                    TYPE_MOVE = _MOVE_SCREEN
-                    active = True
+                # get the highest x and y points from group1
+                max_coords = tuple(np.max(group1, axis=0))
+                # get the lowest x and y points from group1
+                min_coords = tuple(np.min(group1, axis=0))
 
                 func = actions.FunctionCall(
-                    TYPE_MOVE, [_NOT_QUEUED, [target_x, target_y]])
-                return active, func
-            else:
-                print("    Units were not selected!")
+                    _SELECT_RECT_ID, [_SELECT_ALL, max_coords, min_coords])
+                active = True
 
-        elif state[3] and possible_action[action] == _SELECT_ARMY:
-            print("Select entire army")
-            func = actions.FunctionCall(_SELECT_ARMY, [_SELECT_ALL])
+
+        elif action == _SET_CONTROL:
+            """ Set the currently selected units as a control group """
+
+            if self.set or not self.selected or not state[1]:
+                self.qtable.bad_action(state, action_key)
+                return active, func
+
+            self.set = True
+            self.id = get_next_id(obs)
+            func = actions.FunctionCall(
+                _CONTROL_GROUP_ID, [_SET_GROUP, [self.id]])
+            active = True
+
+
+        elif action == _SELECT_CONTROL:
+            """ Select the control group belonging to this group """
+
+            if (self.selected and self.set) or (not self.set and not self.initial_unit_coors):
+                self.qtable.bad_action(state, action_key)
+                return active, func
+
+
             deselect(group_queue)
             self.selected = True
-            return True, func
 
-        elif not state[3] and possible_action[action] == _SELECT_RECT:
-            # assume that all units are grouped together
-            print("Select some units from army")
-            # find the clusters
-            #num_clusters, cluster_sets, clusters, len(units[0])
-            #num_clusters, cluster_sets, clusters, total_units = count_group_clusters(obs, _AI_SELF)
-            # get half of the clusters
-            screen_features = get_units(obs)
-            location = get_unit_coors(screen_features, _AI_SELF)
-            group1, group2 = group_splitter(location, 1)
-            # generate a new group with last known location
-            # print("--------------------------------------------------")
-            g2_mean = tuple(np.mean(group2, axis=0))
-            g1_mean = tuple(np.mean(group1, axis=0))
-            print(g1_mean)
 
-            newGroup = Group(g2_mean, group2)
-            newGroup.Flanker = True
-            # pop the new group into the queue
-            group_queue.append(newGroup)
-            # get our group location
-            self.prev_location = g1_mean
-            self.selected = True
-            self.initial_unit_coors = group1
-            # return selection
+            if self.set:
+                func = actions.FunctionCall(
+                    _CONTROL_GROUP_ID, [_SELECT_ALL, [self.id]])
+                active = True
+            else:
+                max_coords = tuple(np.max(self.initial_unit_coors, axis=0))
+                # get the lowest x and y points from our group1
+                min_coords = tuple(np.min(self.initial_unit_coors, axis=0))
+                func = actions.FunctionCall(
+                    _SELECT_RECT_ID, [_SELECT_ALL, max_coords, min_coords])
+                active = True
 
-            # get the highest x and y points from our group1
-            max_coords = tuple(np.max(group1, axis=0))
-            # get the lowest x and y points from our group1
-            min_coords = tuple(np.min(group1, axis=0))
-            func = actions.FunctionCall(
-                _SELECT_RECT, [_SELECT_ALL, max_coords, min_coords])
-            return True, func
 
-        print("Releasing Control")
-        self.bad = True
-        self.selected = False
-        if self.prev_action == _NO_OP:
-            return True, func  # this is done to prevent an infinite loop
-        else:
-            return False, func  # return false because we didn't perfom action
+        elif action == _MOVE_TO_TARGET:
+            """ Use A* to move toward the direction of a target """
+
+            if not self.set or not self.selected or not state[1]:
+                self.qtable.bad_action(state, action_key)
+                return active, func
+
+            next_pos = A_Star(obs, position, target)
+            active = True
+            func = actions.FunctionCall(_MOVE_SCREEN_ID, [_QUEUED, next_pos])
+
+            if next_pos == target:
+                active = False
+            self.moving = True
+            self.target = target
+
+
+        elif action == _FLANK_TARGET:
+            """ Use dubin's path to flank an enemy grouping """
+
+            if not self.flanker or not self.set or not self.selected or not self.in_position or not state[1]:
+                self.qtable.bad_action(state, action_key)
+                return active, func
+
+            next_pos = arc_position(group_queue[1].prev_location, position, target, radius, THRESH)
+            active = True
+            func = actions.FunctionCall(_ATTACK_SCREEN_ID, [_QUEUED, next_pos])
+
+            if next_pos == target:
+                active = False
+            self.moving = True
+            self.target = target
+
+
+        elif action == _ATTACK_TARGET:
+            """ Attack the enemy by going in a stright line """
+
+            if not self.set or not self.selected or not self.in_position:
+                self.qtable.bad_action(state, action_key)
+                return active, func
+            next_pos = A_Star(obs, position, target)
+            active = False
+            func = actions.FunctionCall(_ATTACK_SCREEN_ID, [_QUEUED, next_pos])
+            self.moving = True
+            self.target = target
+
+
+        elif action == _NO_OP:
+            """ Wait for the other groups """
+
+            teams_ready = True              # Are the other teams ready?
+            for group in group_queue:        # First group is this_group, do not check
+                if not group.in_position:
+                    teams_ready = False
+                    break
+
+            if teams_ready or not self.in_position:
+                self.qtable.bad_action(state, action_key)
+
+            return False, func
+
+        self.prev_state = state
+        self.prev_location = position
+        self.prev_action = action_key
+
+        # print(active, func)
+
+        return active, func
+
+def generate_target(obs, group, thresh = THRESH):
+    # Todo: handle case when there are no enemy coordiantes
+    screen_features = unitselection.get_units(obs)
+    targetxs, targetys = unitselection.get_unit_coors(screen_features, _AI_HOSTILE)
+
+    if not targetxs.size:
+        map = coordgrabber.get_map_size(obs)
+        return (randint(0,map[0]), randint(0,map[1]))
+
+    selfxs, selfys = unitselection.get_unit_coors(screen_features, _AI_SELF)
+    selfx = selfxs.mean()
+    selfy = selfys.mean()
+    loc = (selfx, selfy)
+
+    xmax = np.argmax(targetxs)
+    xmin = np.argmin(targetxs)
+    ymax = np.argmax(targetys)
+    ymin = np.argmin(targetys)
+
+    labely = (targetys[ymax] - targetys[ymin])
+    labelx = (targetxs[xmax] - targetxs[xmin])
+
+    if labelx > labely:
+        # Our group units are closer to the top of the enemy units
+        if Distance_Calc(loc, (targetxs[ymin], targetys[ymin])) < Distance_Calc(loc, (targetxs[ymax], targetys[ymax])):
+            target = targetxs[ymin], targetys[ymin]
+        # Our group units are closer to the bottom of the enemy units
+        else: target =  targetxs[ymax], targetys[ymax]
+    else:
+        # Our group units are closer to the left of the enemy units
+        if Distance_Calc(loc, (targetxs[xmin], targetys[xmin])) < Distance_Calc(loc, (targetxs[xmax], targetys[xmax])):
+            target =  targetxs[xmin], targetys[xmin]
+        # Our group units are closer to the right of the enemy units
+        else: target =  targetxs[xmax], targetys[xmax]
+
+    distances_from_center = []
+    for enemy in zip(targetxs, targetys):
+        distances_from_center.append(Distance_Calc(target, enemy))
+
+    return target, (np.argmax(distances_from_center) + thresh)

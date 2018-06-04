@@ -4,25 +4,7 @@
 import numpy as np
 import scipy.cluster.hierarchy as hcluster
 from pysc2.lib import features
-
-_AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
-_UNIT_TYPE = features.SCREEN_FEATURES.unit_type.index
-_AI_HOSTILE = 4
-_AI_SELF = 1
-
-# def count_num_units(obs, unit_type):
-#     unit_graph = obs.observation['screen'][_UNIT_TYPE]
-#     unit_x, unit_y = (unit_graph == unit_type).nonzero()
-#
-#     units = []
-#
-#     num_pixels = len(unit_y)
-#     for i in range(0, num_pixels):
-#         units.append((unit_x[i], unit_y[i]))
-#
-#     unit_pixels = 1 # this should the the pixel coverage per unit
-#
-#     kmeans = KMeans(n_clusters = num_pixels / unit_pixels)
+from constants import _AI_SELF
 
 
 """ takes in an observation and returns the units as an array """
@@ -51,7 +33,7 @@ def get_unit_coors(units, alliance):
 
 
 """ Defines clusters within a map relative to the AI """
-def count_group_clusters(obs, who = _AI_SELF):
+def count_group_clusters(obs, who =_AI_SELF):
     units = get_unit_coors(get_units(obs), who)
     if np.any(units[0]):
         thresh = 10 # this should translate to 10 pixels
