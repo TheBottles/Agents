@@ -179,6 +179,13 @@ def AStar_Algo(obs, Start, Goal):
                 break
         else:
             Neighbors = Graph(Current.state, shape)
+
+            # Artificially add a direct line of path
+            theta = math.atan2(Start[1] - Goal[1], Start[0] - Goal[0])
+            x = round(math.cos(theta) * 10)
+            y = round(math.sin(theta) * 10)
+            Neighbors.append((x,y))
+
             for n in Neighbors:
                 #There's 3 cases but only took accound for 2 so far
 
@@ -214,7 +221,7 @@ def AStar_Algo(obs, Start, Goal):
         current = current.backpointer
 
     try:
-        return path[-2]
+        return path[-3]
     except IndexError:
         return Goal
 
@@ -247,13 +254,16 @@ def arc_position(headon_pos, flanker_pos, enemy_pos, radius, arclength):
 
     if pos_angle < neg_angle:
         next_theta = theta_flank + theta_increment
-    elif pos_angle > neg_angle:
-        next_theta = theta_flank - theta_increment
     else:
-        next_theta = theta_flank
+        next_theta = theta_flank - theta_increment
 
     next_x = radius * math.cos(next_theta) + enemy_pos[0]
     next_y = radius * math.sin(next_theta) + enemy_pos[1]
+
+    print("------ Doing Dubin's Path ------")
+    print(theta_head, theta_flank, theta_total)
+    print(pos_angle, neg_angle)
+    print(round(next_x), round(next_y))
 
     return next_x, next_y
 
