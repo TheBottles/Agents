@@ -44,10 +44,7 @@ EPS_END = 0.025
 EPS_DECAY = 2500
 steps = 0
 
-SELECT_ADD_OPTIONS = [
-    ("select", False),
-    ("add", True),
-]
+_FLANK_ENEMY = 9999
 
 possible_action = [
     _NO_OP,
@@ -58,7 +55,8 @@ possible_action = [
     _ATTACK_SCREEN,
     # _MOVE_RAND,
     # _MOVE_MIDDLE,
-    # _MOVE_SCREEN
+    # _MOVE_SCREEN,
+    _FLANK_ENEMY,
 ]
 
 class FlankingAgent(base_agent.BaseAgent):
@@ -87,7 +85,6 @@ class FlankingAgent(base_agent.BaseAgent):
             self.groups = []
             self.groups.append(Group())
             self.groups[0].control_id = 0
-            self.group_died = False
         elif obs.last():
             for subagent in self.groups:
                 subagent.update_tables()
@@ -108,12 +105,12 @@ class FlankingAgent(base_agent.BaseAgent):
 
             group = self.groups[0]
 
-            if group.set and obs.observation['control_groups'][group.control_id][0] == 0:
-                self.groups.pop(0)
-                self.group_died = True
-                continue
+            # if group.set and obs.observation['control_groups'][group.control_id][0] == 0:
+            #     self.groups.pop(0)
+            #     self.group_died = True
+            #     continue
 
-            active, func = group.do_action(obs, step_score, self.groups, self.group_died)
+            active, func = group.do_action(obs, step_score, self.groups)
 
             if not active:
                 self.groups.pop(0)

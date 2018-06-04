@@ -46,10 +46,7 @@ EPS_END = 0.025
 EPS_DECAY = 2500
 steps = 0
 
-SELECT_ADD_OPTIONS = [
-    ("select", False),
-    ("add", True),
-]
+_FLANK_ENEMY = 9999
 
 possible_action = [
     _NO_OP,
@@ -60,8 +57,10 @@ possible_action = [
     _ATTACK_SCREEN,
     # _MOVE_RAND,
     # _MOVE_MIDDLE,
-    # _MOVE_SCREEN
+    # _MOVE_SCREEN,
+    _FLANK_ENEMY,
 ]
+
 
 def get_flank_coords(obs, flanker):
     # Todo: handle case when there are no enemy coordiantes
@@ -98,10 +97,10 @@ def get_flank_coords(obs, flanker):
             target =  targetxs[xmin], targetys[xmin]
         else: target =  targetxs[xmax], targetys[xmax]
     #
-    print("Target:", target)
-
-    for x,y in zip(targetxs, targetys):
-        print("    ", x,y)
+    # print("Target:", target)
+    # 
+    # for x,y in zip(targetxs, targetys):
+    #     print("    ", x,y)
     return target
 
 def get_eps_threshold(steps_done):
