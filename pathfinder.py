@@ -231,8 +231,8 @@ def arc_position(head_on_pos, flanker_pos, enemy_pos, radius, arc_length):
     else:
         next_theta = theta_flank - theta_increment
 
-    next_x = radius * math.cos(next_theta) + enemy_pos[0]
-    next_y = radius * math.sin(next_theta) + enemy_pos[1]
+    next_x = round(radius * math.cos(next_theta) + enemy_pos[0])
+    next_y = round(radius * math.sin(next_theta) + enemy_pos[1])
 
     # print("------ Doing Dubin's Path ------")
     # print(theta_head, theta_flank, theta_total)

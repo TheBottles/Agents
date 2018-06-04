@@ -103,50 +103,68 @@ class Group():
         active = False
         func = actions.FunctionCall(constants.NO_OP, [])
 
-        # print(state, action)
+        print(state, action)
 
         if action == constants.SELECT_UNITS:
             """ Select half of our AI units and split groups """
 
-            if self.set or state[1] or self.selected:
+            if self.set or self.selected:
                 self.qtable.bad_action(state, action_key)
-                return active, func
+                return True, func
 
-            # Locate our AI units
-            location = unitselection.get_unit_coors(all_units, constants.AI_SELF)
-            # print(location)
-
-            # Divide units
-            group1, group2 = unitselection.group_splitter(location, 1)
-            # print(group1)
-            # print(group2)
-
-            if len(group1) > 0 and len(group2) > 0:
-                # generate a new group with last known location
-                g2_mean = tuple(np.mean(group2, axis=0))
-                g1_mean = tuple(np.mean(group1, axis=0))
-                # print(g1_mean)
-
-                newGroup = Group(g2_mean, group2)
-                newGroup.flanker = True
-
-                # enqueue  the new group into the queue
-                group_queue.append(newGroup)
-                # get our group location
-                self.prev_location = g1_mean
-
+            if self.initial_unit_coors:
                 deselect(group_queue)
                 self.selected = True
                 # return selection
 
                 # get the highest x and y points from group1
-                max_coords = tuple(np.max(group1, axis=0))
+                max_coords = tuple(np.max(self.initial_unit_coors, axis=0))
                 # get the lowest x and y points from group1
-                min_coords = tuple(np.min(group1, axis=0))
+                min_coords = tuple(np.min(self.initial_unit_coors, axis=0))
 
                 func = actions.FunctionCall(
                     constants.SELECT_RECT_ID, [constants.SELECT_ALL, max_coords, min_coords])
                 active = True
+
+            else:
+
+                # Locate our AI units
+                location = unitselection.get_unit_coors(all_units, constants.AI_SELF)
+                # print(location)
+
+                # Divide units
+                group1, group2 = unitselection.group_splitter(location, 1)
+
+                if len(group1) > 0 and len(group2) > 0:
+
+                    # print(group1)
+                    # print(group2)
+
+                    # generate a new group with last known location
+                    g2_mean = tuple(np.mean(group2, axis=0))
+                    g1_mean = tuple(np.mean(group1, axis=0))
+                    # print(g1_mean)
+
+                    newGroup = Group(g2_mean, group2)
+                    newGroup.flanker = True
+
+                    # enqueue  the new group into the queue
+                    group_queue.append(newGroup)
+                    # get our group location
+                    self.prev_location = g1_mean
+
+                    deselect(group_queue)
+                    self.selected = True
+                    # return selection
+
+                    # get the highest x and y points from group1
+                    max_coords = tuple(np.max(group1, axis=0))
+                    # get the lowest x and y points from group1
+                    min_coords = tuple(np.min(group1, axis=0))
+
+                    func = actions.FunctionCall(
+                        constants.SELECT_RECT_ID, [constants.SELECT_ALL, max_coords, min_coords])
+                    active = True
 
             # else:
             #     self.selected = True
@@ -192,7 +210,7 @@ class Group():
         elif action == constants.MOVE_TO_TARGET:
             """ Use A* to move toward the direction of a target """
 
-            if not self.set or not self.selected or not state[1]:
+            if not self.set or not self.selected:
                 self.qtable.bad_action(state, action_key)
                 return active, func
 
@@ -211,14 +229,16 @@ class Group():
         elif action == constants.FLANK_TARGET:
             """ Use dubin's path to flank an enemy grouping """
 
-            if not self.flanker or not self.set or not self.selected or not self.in_position or not state[1]:
+            if not self.flanker or not self.set or not self.selected or not state[1]:
                 self.qtable.bad_action(state, action_key)
                 return active, func
 
             next_pos = pathfinder.arc_position(group_queue[1].prev_location, position, target, radius, constants.THRESH)
 
+            next_pos = (min(next_pos[0], 83), min(next_pos[1], 83))
+            next_pos = (max(next_pos[0],  0), max(next_pos[1],  0))
+
             if next_pos == target:
-                active = False
                 self.in_position = True
 
             self.moving = True
@@ -228,9 +248,9 @@ class Group():
             func = actions.FunctionCall(constants.ATTACK_SCREEN_ID, [constants.NOT_QUEUED, next_pos])
 
         elif action == constants.ATTACK_TARGET:
-            """ Attack the enemy by going in a stright line """
+            """ Attack the enemy by going in a straight line """
 
-            if not self.set or not self.selected or not state[1]:
+            if not self.set or not self.selected:
                 self.qtable.bad_action(state, action_key)
                 return active, func
             next_pos = pathfinder.a_star(obs, position, target)

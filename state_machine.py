@@ -113,6 +113,6 @@ class ModifiedQTable(QTable):
         super(ModifiedQTable, self).__init__(actions, lr=lr, reward_decay=reward_decay, load_qt=load_qt, load_st=load_st)
 
     def bad_action(self, state, action):
-        # print("Not a valid action for this state")
+        print("Not a valid action for this state")
         bad = tuple((-1, -1, -1, -1, -1, -1, -1, -1))
         self.update_qtable(state, bad, action, -9999)
