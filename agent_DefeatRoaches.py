@@ -21,6 +21,7 @@ class FlankingAgent(base_agent.BaseAgent):
         self.prev_state = None
         self.prev_action = None
         self.score = 0
+        self.multigroup = False
 
     def step(self, obs):
 
@@ -48,14 +49,15 @@ class FlankingAgent(base_agent.BaseAgent):
             # step_score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])- self.score - (2 * hostile_health) + ai_health
             # self.score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])
 
+            if len(self.groups) > 1:
+                self.multigroup = True
             group = self.groups[0]
-
             if group.set and obs.observation['control_groups'][group.id][0] == 0:
                 self.groups.pop(0)
                 group.group_died = True
                 continue
 
-            active, func = group.do_action(obs, self.groups, self.steps)
+            active, func = group.do_action(obs, self.groups, self.steps, self.multigroup)
 
             if not active:
                 self.groups.pop(0)

@@ -5,7 +5,7 @@ import constants
 import unitselection
 
 
-def get_state(obs, this_group, groups):
+def get_state(obs, this_group, groups, multigroup):
     # State information about the state of the game
     all_units = unitselection.get_units(obs)
     hostile_present = len(unitselection.get_alliance_units(all_units, constants.AI_HOSTILE)) > 0
@@ -25,7 +25,7 @@ def get_state(obs, this_group, groups):
     set = this_group.set
     initialized = bool(this_group.initial_unit_coors)
 
-    state = tuple((hostile_present, multigroup, initialized, teams_ready, flanker, ready, selected, set))
+    state = tuple((hostile_present, multigroup, initialized, teams_ready, flanker, ready, selected, set, multigroup))
 
     return state
 
