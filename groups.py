@@ -70,7 +70,7 @@ class Group():
         self.qtable.save_qtable(self.tablename)
         self.qtable.save_states(self.statename)
 
-    def do_action(self, obs, group_queue, steps):
+    def do_action(self, obs, group_queue, steps, multigroup):
 
         all_units = unitselection.get_units(obs)
 
@@ -87,7 +87,7 @@ class Group():
         elif position is not self.prev_location:
             self.moving = True
 
-        state = state_machine.get_state(obs, self, group_queue)
+        state = state_machine.get_state(obs, self, group_queue, multigroup)
         action_key = self.qtable.get_action(state, steps)
         action = constants.possible_action[action_key]
 
@@ -103,12 +103,12 @@ class Group():
         active = False
         func = actions.FunctionCall(constants.NO_OP, [])
 
-        print(state, action)
+
 
         if action == constants.SELECT_UNITS:
             """ Select half of our AI units and split groups """
 
-            if self.set or self.selected:
+            if (self.set or self.selected) and multigroup:
                 self.qtable.bad_action(state, action_key)
                 return True, func
 
@@ -176,6 +176,7 @@ class Group():
             """ Set the currently selected units as a control group """
 
             if self.set or not self.selected or not state[1]:
+                print("bad------------------")
                 self.qtable.bad_action(state, action_key)
                 return active, func
 
@@ -188,7 +189,8 @@ class Group():
         elif action == constants.SELECT_CONTROL:
             """ Select the control group belonging to this group """
 
-            if (self.selected and self.set) or (not self.set and not self.initial_unit_coors):
+            if self.selected or not self.set:
+                print("---------------Bad-------------------")
                 self.qtable.bad_action(state, action_key)
                 return active, func
 
@@ -282,7 +284,7 @@ class Group():
         # print(active, func)
 
         self.moves.append([state, action_key])
-
+        print(state, func, action)
         return active, func
 
 
