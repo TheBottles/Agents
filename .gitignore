@@ -2,3 +2,8 @@ single_game_obs.npy
 /__pycache__/
 __pycache__/
 sc2/
+.idea/workspace.xml
+.idea/vcs.xml
+.idea/modules.xml
+.idea/misc.xml
+.idea/Agents.iml
