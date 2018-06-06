@@ -58,7 +58,8 @@ class Group():
             self.qtable = state_machine.ModifiedQTable(constants.possible_action)
 
     def apply_rewards(self, reward):
-        if reward == 0: reward = -1
+        reward = 0 if not reward else reward
+
         for i in range(len(self.moves) - 1):
             prev_state = self.moves[i][0]
             next_state = self.moves[i + 1][0]
@@ -130,12 +131,16 @@ class Group():
                 # print(g1_mean)
 
                 newGroup = Group(g2_mean, group2)
-                newGroup.flanker = True
+                self.prev_location = g1_mean
+
+                if coordgrabber.distance(newGroup.prev_location, target) < coordgrabber.distance(self.prev_location, target):
+                    self.flanker = True
+                else:
+                    newGroup.flanker = True
 
                 # enqueue  the new group into the queue
                 group_queue.append(newGroup)
                 # get our group location
-                self.prev_location = g1_mean
 
                 deselect(group_queue)
                 self.selected = True
@@ -210,7 +215,8 @@ class Group():
 
             next_pos = pathfinder.arc_position(group_queue[1].prev_location, position, target, radius, constants.THRESH)
 
-            next_pos = (min(next_pos[0], 83), min(next_pos[1], 83))
+            map = coordgrabber.get_map_size(obs)
+            next_pos = (min(next_pos[0], map[0]), min(next_pos[1], map[1]))
             next_pos = (max(next_pos[0], 0), max(next_pos[1], 0))
 
             if next_pos == target:
@@ -305,9 +311,6 @@ def valid(state, action):
     elif (action == constants.SELECT_CONTROL) and (state.selected or not state.set):
         return False
 
-    elif (action == constants.NO_OP) and state.groups_ready:
-        return False
-
     elif (action == constants.ATTACK_TARGET) and not (state.set and state.selected and state.multigroup):
         return False
 
@@ -316,6 +319,9 @@ def valid(state, action):
         return False
 
     elif (action == constants.MOVE_TO_TARGET) and not (state.set and state.selected and state.multigroup):
+        return False
+
+    elif action == constants.NO_OP and (state.groups_ready or not state.selected or not state.set):
         return False
 
     return True

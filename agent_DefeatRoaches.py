@@ -41,22 +41,19 @@ class FlankingAgent(base_agent.BaseAgent):
 
         self.steps += 1
 
-
         if obs.last():
-
             os.system('clear')
-
             for sub_agent in self.groups:
                 sub_agent.apply_rewards(obs.reward)
                 sub_agent.update_tables()
-
-            self.refresh()
-
             print(obs.reward, "\n")
 
         if not self.multigroup and len(self.groups) > 1:
             if all([group.set for group in self.groups]):
                 self.multigroup = True
+
+        elif self.multigroup and all(not units[1] for units in obs.observation['control_groups']):
+            self.refresh()
 
         while self.groups:
             # print("WHILE LOOP")

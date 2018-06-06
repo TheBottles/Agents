@@ -24,7 +24,7 @@ def get_map_size(obs):
         Returns the size of the map in a tuple
     """
     ai_view = obs.observation['feature_screen'][constants.AI_RELATIVE]
-    return ai_view.shape
+    return np.array(ai_view.shape) - 1
 
 
 def distance(loc1, loc2):
