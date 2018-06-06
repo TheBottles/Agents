@@ -24,7 +24,22 @@ def get_target(ai_relative_view):
 
 class Agent2(base_agent.BaseAgent):
     """An agent for doing a simple movement form one point to another."""
+    def __init__(self):
+        self.wins = 0
+        self.loss = 0
+
     def step(self, obs):
+        if obs.last():
+            if obs.reward > 0:
+                self.wins += 1
+            elif obs.reward < 0:
+                self.loss += 1
+
+            if self.wins + self.loss > 0:
+                print("%.2f%% percent win rate" % (self.wins/ (self.wins + self.loss) * 100))
+
+            print("Wins: %d, Loss: %d" % (self.wins, self.loss))
+
         '''Step function gets called automatically by pysc2 environment'''
         super(Agent2, self).step(obs)
         if _MOVE_SCREEN in obs.observation['available_actions']:
