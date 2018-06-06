@@ -3,6 +3,7 @@ from pysc2.agents import base_agent
 from constants import NO_OP_ID
 from groups import *
 
+import os
 
 def get_unit_health(obs, unit_type):
     unit_hp = obs.observation['feature_units']
@@ -23,6 +24,14 @@ class FlankingAgent(base_agent.BaseAgent):
         self.score = 0
         self.multigroup = False
 
+        self.refresh()
+
+    def refresh(self):
+        self.groups = []
+        self.groups.append(Group())
+        self.groups[0].control_id = 0
+        self.multigroup = False
+
     def step(self, obs):
 
         '''Step function gets called automatically by pysc2 environment'''
@@ -32,14 +41,22 @@ class FlankingAgent(base_agent.BaseAgent):
 
         self.steps += 1
 
+
         if obs.last():
-            for subagent in self.groups:
-                subagent.apply_rewards(obs.reward)
-                subagent.update_tables()
-            print(obs.reward)
-            self.groups = []
-            self.groups.append(Group())
-            self.groups[0].control_id = 0
+
+            os.system('clear')
+
+            for sub_agent in self.groups:
+                sub_agent.apply_rewards(obs.reward)
+                sub_agent.update_tables()
+
+            self.refresh()
+
+            print(obs.reward, "\n")
+
+        if not self.multigroup and len(self.groups) > 1:
+            if all([group.set for group in self.groups]):
+                self.multigroup = True
 
         while self.groups:
             # print("WHILE LOOP")
@@ -49,9 +66,9 @@ class FlankingAgent(base_agent.BaseAgent):
             # step_score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])- self.score - (2 * hostile_health) + ai_health
             # self.score = (obs.observation['score_cumulative'][3]+obs.observation['score_cumulative'][5])
 
-            if len(self.groups) > 1:
-                self.multigroup = True
             group = self.groups[0]
+
+
             if group.set and obs.observation['control_groups'][group.id][0] == 0:
                 self.groups.pop(0)
                 group.group_died = True
@@ -63,6 +80,7 @@ class FlankingAgent(base_agent.BaseAgent):
                 self.groups.pop(0)
                 self.groups.append(group)
 
+            print("        ",[group.id for group in self.groups])
             return func
 
         self.groups.append(Group())

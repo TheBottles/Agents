@@ -35,6 +35,16 @@ def get_unit_coors(units, alliance):
     return gen_coordinates(get_alliance_units(units, alliance))
 
 
+def get_selected_coors(obs):
+    coors = [[], []]
+    for unit in obs.observation['feature_units']:
+        if unit.is_selected:
+            coors[0].append(unit.x)
+            coors[1].append(unit.y)
+
+    return np.array(coors)
+
+
 def count_group_clusters(obs, who=AI_SELF):
     """ Defines clusters within a map relative to the AI """
 

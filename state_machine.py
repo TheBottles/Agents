@@ -1,11 +1,13 @@
+from collections import namedtuple
 import math
 import numpy as np
 
 import constants
 import unitselection
 
+State = namedtuple('State', 'enemy split init groups_ready flanking ready selected set multigroup')
 
-def get_state(obs, this_group, groups, multigroup):
+def get_state(obs, this_group, groups, multigroup_existed):
     # State information about the state of the game
     all_units = unitselection.get_units(obs)
     hostile_present = len(unitselection.get_alliance_units(all_units, constants.AI_HOSTILE)) > 0
@@ -25,7 +27,7 @@ def get_state(obs, this_group, groups, multigroup):
     set = this_group.set
     initialized = bool(this_group.initial_unit_coors)
 
-    state = tuple((hostile_present, multigroup, initialized, teams_ready, flanker, ready, selected, set, multigroup))
+    state = State(hostile_present, multigroup, initialized, teams_ready, flanker, ready, selected, set, multigroup_existed)
 
     return state
 
@@ -113,6 +115,5 @@ class ModifiedQTable(QTable):
         super(ModifiedQTable, self).__init__(actions, lr=lr, reward_decay=reward_decay, load_qt=load_qt, load_st=load_st)
 
     def bad_action(self, state, action):
-        print("Not a valid action for this state")
         bad = tuple((-1, -1, -1, -1, -1, -1, -1, -1))
         self.update_qtable(state, bad, action, -9999)
