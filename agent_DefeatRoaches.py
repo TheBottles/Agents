@@ -1,6 +1,6 @@
 from pysc2.agents import base_agent
 
-from constants import NO_OP_ID
+from constants import NO_OP_ID, AI_SELF
 from groups import *
 
 import os
@@ -23,6 +23,11 @@ class FlankingAgent(base_agent.BaseAgent):
         self.prev_action = None
         self.score = 0
         self.multigroup = False
+
+        self.reward = 0
+        self.wins = 0
+        self.loss = 0
+        self.reward = 0
 
         self.refresh()
 
@@ -48,6 +53,17 @@ class FlankingAgent(base_agent.BaseAgent):
                 sub_agent.apply_rewards(relative_score)
                 sub_agent.update_tables()
             print(obs.observation['score_cumulative'][0] + obs.reward *10, "\n")
+
+            if obs.reward > 0:
+                self.wins += 1
+            elif obs.reward < 0:
+                self.loss += 1
+
+            if self.wins + self.loss > 0:
+                print("%.2f%% percent win rate" % (self.wins/ (self.wins + self.loss) * 100))
+
+            print("Wins: %d, Loss: %d" % (self.wins, self.loss))
+
 
         # print("cumulative", obs.observation['score_cumulative'])
 

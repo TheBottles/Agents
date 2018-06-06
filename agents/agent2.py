@@ -18,10 +18,10 @@ _AI_HOSTILE = 4
 _SELECT_ALL = [0]
 _NOT_QUEUED = [0]
 
-def get_beacon_location(ai_relative_view):
+def get_target(ai_relative_view):
     '''returns the location indices of the beacon on the map'''
-    return (ai_relative_view == _AI_NEUTRAL).nonzero() 
-    
+    return (ai_relative_view == _AI_HOSTILE).nonzero()
+
 class Agent2(base_agent.BaseAgent):
     """An agent for doing a simple movement form one point to another."""
     def step(self, obs):
@@ -30,7 +30,7 @@ class Agent2(base_agent.BaseAgent):
         if _MOVE_SCREEN in obs.observation['available_actions']:
             ai_view = obs.observation['screen'][_AI_RELATIVE]
             # get the beacon coordinates
-            beacon_xs, beacon_ys = get_beacon_location(ai_view)
+            beacon_xs, beacon_ys = get_target(ai_view)
             if not beacon_ys.any():
                 return actions.FunctionCall(_NO_OP, [])
             # get the middle of the beacon and move there
