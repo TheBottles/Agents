@@ -208,7 +208,7 @@ class Group():
             self.target = target
 
             active = False
-            func = actions.FunctionCall(constants.MOVE_SCREEN_ID, [constants.NOT_QUEUED, next_pos])
+            func = actions.FunctionCall(constants.ATTACK_SCREEN_ID, [constants.NOT_QUEUED, next_pos])
 
         elif action == constants.FLANK_TARGET:
             """ Use dubin's path to flank an enemy grouping """
@@ -254,14 +254,26 @@ class Group():
         return active, func
 
 
-def generate_target(obs, position, thresh=constants.THRESH):
+def generate_target(obs, old_position, thresh=constants.THRESH):
     # Todo: handle case when there are no enemy coordiantes
     screen_features = unitselection.get_units(obs)
     target_xs, target_ys = unitselection.get_unit_coors(screen_features, constants.AI_HOSTILE)
 
-    if not target_xs.size:
-        map = coordgrabber.get_map_size(obs)
-        return randint(0, map[0]), randint(0, map[1])
+    enemies = unitselection.get_alliance_units(screen_features, constants.AI_HOSTILE)
+
+    max = 0
+    min = 10000
+    target = None
+    weak_target = None
+    for enemy in enemies:
+        if enemy.health  > max:
+            max = enemy.health
+        if enemy.health < min:
+            min = enemy.health
+            weak_target = (enemy.x, enemy.y)
+
+
+    position = unitselection.get_unit_coors(screen_features, constants.AI_SELF).mean(axis = 1)
 
     x_max = np.argmax(target_xs)
     x_min = np.argmin(target_xs)
@@ -271,9 +283,14 @@ def generate_target(obs, position, thresh=constants.THRESH):
     label_y = (target_ys[y_max] - target_ys[y_min])
     label_x = (target_xs[x_max] - target_xs[x_min])
 
-    if not position:
-        target = target_xs.mean(), target_ys.mean()
-    elif label_x > label_y:
+    # if not position:
+    #     target = target_xs.mean(), target_ys.mean()
+
+    if not target_xs.size:
+        map = coordgrabber.get_map_size(obs)
+        return randint(0, map[0]), randint(0, map[1])
+
+    if label_x > label_y:
         # Our group units are closer to the top of the enemy units
         if coordgrabber.distance(position, (target_xs[y_min], target_ys[y_min])) < coordgrabber.distance(position, (
                 target_xs[y_max], target_ys[y_max])):
@@ -293,6 +310,9 @@ def generate_target(obs, position, thresh=constants.THRESH):
     distances_from_center = []
     for enemy in zip(target_xs, target_ys):
         distances_from_center.append(coordgrabber.distance(target, enemy))
+
+    if max != min:
+        return weak_target, (np.argmax(distances_from_center) + thresh)
 
     return target, (np.argmax(distances_from_center) + thresh)
 
