@@ -104,14 +104,14 @@ class Group():
 
         while constants.moves[action] not in obs.observation['available_actions'] or not valid(state, action):
             self.qtable.bad_action(state, action_key)
-            print("      --", "%4s" % self.id , "%4d" % action, state)
+            # print("      --", "%4s" % self.id , "%4d" % action, state)
             action_key = self.qtable.get_action(state, steps)
             action = constants.possible_action[action_key]
 
         active = False
         func = actions.FunctionCall(constants.NO_OP, [])
 
-        print("VALID --", "%4s" % self.id, "%4d" % action, state)
+        # print("VALID --", "%4s" % self.id, "%4d" % action, state)
 
         if action == constants.SPLIT_UNITS:
             # Locate our AI units

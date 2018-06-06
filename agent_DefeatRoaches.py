@@ -42,11 +42,14 @@ class FlankingAgent(base_agent.BaseAgent):
         self.steps += 1
 
         if obs.last():
-            os.system('clear')
+            # os.system('clear')
+            relative_score = obs.observation['score_cumulative'][0] + (obs.reward * 10)
             for sub_agent in self.groups:
-                sub_agent.apply_rewards(obs.reward)
+                sub_agent.apply_rewards(relative_score)
                 sub_agent.update_tables()
-            print(obs.reward, "\n")
+            print(obs.observation['score_cumulative'][0] + obs.reward *10, "\n")
+
+        # print("cumulative", obs.observation['score_cumulative'])
 
         if not self.multigroup and len(self.groups) > 1:
             if all([group.set for group in self.groups]):
@@ -77,7 +80,7 @@ class FlankingAgent(base_agent.BaseAgent):
                 self.groups.pop(0)
                 self.groups.append(group)
 
-            print("        ",[group.id for group in self.groups])
+            # print("        ",[group.id for group in self.groups])
             return func
 
         self.groups.append(Group())
