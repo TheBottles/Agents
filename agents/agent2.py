@@ -24,16 +24,17 @@ def get_target(ai_relative_view):
 
 class Agent2(base_agent.BaseAgent):
     """An agent for doing a simple movement form one point to another."""
-    def __init__(self):
-        self.wins = 0
-        self.loss = 0
+    wins = 0
+    loss = 0
+
+    # def __init__(self):
 
     def step(self, obs):
         if obs.last():
             if obs.reward > 0:
-                self.wins += 1
+                Agent2.wins += 1
             elif obs.reward < 0:
-                self.loss += 1
+                Agent2.loss += 1
 
             if self.wins + self.loss > 0:
                 print("%.2f%% percent win rate" % (self.wins/ (self.wins + self.loss) * 100))
@@ -43,7 +44,7 @@ class Agent2(base_agent.BaseAgent):
         '''Step function gets called automatically by pysc2 environment'''
         super(Agent2, self).step(obs)
         if _MOVE_SCREEN in obs.observation['available_actions']:
-            ai_view = obs.observation['screen'][_AI_RELATIVE]
+            ai_view = obs.observation['feature_screen'][_AI_RELATIVE]
             # get the beacon coordinates
             beacon_xs, beacon_ys = get_target(ai_view)
             if not beacon_ys.any():
