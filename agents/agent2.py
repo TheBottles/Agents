@@ -6,6 +6,9 @@ from pysc2.env import sc2_env, run_loop, available_actions_printer
 from pysc2 import maps
 from absl import flags
 
+import unitselection
+import constants
+
 _AI_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _NO_OP = actions.FUNCTIONS.no_op.id
 _MOVE_SCREEN = actions.FUNCTIONS.Attack_screen.id
@@ -22,24 +25,37 @@ def get_target(ai_relative_view):
     '''returns the location indices of the beacon on the map'''
     return (ai_relative_view == _AI_HOSTILE).nonzero()
 
+wins = 0
+loss = 0
+prev_enemies = 0
+
 class Agent2(base_agent.BaseAgent):
     """An agent for doing a simple movement form one point to another."""
+
     wins = 0
     loss = 0
+    prev_enemies = 0
 
-    # def __init__(self):
 
     def step(self, obs):
+
+        units = unitselection.get_units(obs)
+        enemy_units = len(unitselection.get_alliance_units(units, constants.AI_HOSTILE))
+        ai_units = len(unitselection.get_alliance_units(units, constants.AI_SELF))
+
+        if enemy_units > Agent2.prev_enemies:
+            Agent2.wins += 1
+            print()
+        elif ai_units == 0:
+            Agent2.loss += 1
+
+        Agent2.prev_enemies = enemy_units
+
         if obs.last():
-            if obs.reward > 0:
-                Agent2.wins += 1
-            elif obs.reward < 0:
-                Agent2.loss += 1
+            if wins + loss > 0:
+                print("%.2f%% percent win rate" % (Agent2.wins/ (Agent2.wins + Agent2.loss) * 100))
 
-            if self.wins + self.loss > 0:
-                print("%.2f%% percent win rate" % (self.wins/ (self.wins + self.loss) * 100))
-
-            print("Wins: %d, Loss: %d" % (self.wins, self.loss))
+            print("Wins: %d, Loss: %d" % (Agent2.wins, Agent2.loss))
 
         '''Step function gets called automatically by pysc2 environment'''
         super(Agent2, self).step(obs)

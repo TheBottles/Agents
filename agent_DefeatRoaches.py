@@ -2,6 +2,8 @@ from pysc2.agents import base_agent
 
 from constants import NO_OP_ID, AI_SELF
 from groups import *
+import unitselection
+import time
 
 import os
 
@@ -36,13 +38,24 @@ class FlankingAgent(base_agent.BaseAgent):
         self.groups.append(Group())
         self.groups[0].control_id = 0
         self.multigroup = False
+        self.prev_enemies = 0
 
     def step(self, obs):
 
         '''Step function gets called automatically by pysc2 environment'''
         super(FlankingAgent, self).step(obs)
 
-        # print(obs.observation['control_groups'])
+        units = unitselection.get_units(obs)
+        enemy_units = len(unitselection.get_alliance_units(units, constants.AI_HOSTILE))
+        ai_units = len(unitselection.get_alliance_units(units, constants.AI_SELF))
+
+        if enemy_units > self.prev_enemies:
+            self.wins += 1
+            print()
+        elif ai_units == 0:
+            self.loss += 1
+
+        self.prev_enemies = enemy_units
 
         self.steps += 1
 
@@ -54,15 +67,11 @@ class FlankingAgent(base_agent.BaseAgent):
                 sub_agent.update_tables()
             print(obs.observation['score_cumulative'][0] + obs.reward *10, "\n")
 
-            if obs.reward > 0:
-                self.wins += 1
-            elif obs.reward < 0:
-                self.loss += 1
-
             if self.wins + self.loss > 0:
                 print("%.2f%% percent win rate" % (self.wins/ (self.wins + self.loss) * 100))
 
             print("Wins: %d, Loss: %d" % (self.wins, self.loss))
+
 
 
         # print("cumulative", obs.observation['score_cumulative'])
