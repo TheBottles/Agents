@@ -32,7 +32,7 @@ SET_GROUP  = [1]
         7. No-op (this should only be done when waiting for other teams)
 """
 
-THRESH = 15
+THRESH = 5
 
 # Custom Moves
 NO_OP          = 0000

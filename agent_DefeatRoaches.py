@@ -40,6 +40,15 @@ class FlankingAgent(base_agent.BaseAgent):
         self.groups[0].control_id = 0
         self.multigroup = False
         self.prev_enemies = 0
+        self.prev_units = 0
+
+    def update(self, obs, reward):
+        relative_score = obs.observation['score_cumulative'][0] + reward
+        for sub_agent in self.groups:
+            sub_agent.apply_rewards(relative_score)
+            sub_agent.update_tables()
+            sub_agent.moves = []
+        print(reward, "\n")
 
     def step(self, obs):
 
@@ -52,23 +61,25 @@ class FlankingAgent(base_agent.BaseAgent):
 
         if enemy_units > self.prev_enemies:
             self.wins += 1
-            print()
+            self.update(obs, (self.prev_units + 1) * 5)
         elif ai_units == 0:
             self.loss += 1
+            self.update(obs, -1)
 
         self.prev_enemies = enemy_units
+        self.prev_units   = ai_units
 
         self.steps += 1
 
+        if self.wins + self.loss == 300:
+            if self.wins + self.loss > 0:
+                print("%.2f%% percent win rate" % (self.wins/ (self.wins + self.loss) * 100))
+            print("Wins: %d, Loss: %d" % (self.wins, self.loss))
+            self.update()
+            raise KeyboardInterrupt
+
         if obs.last():
             self.prev_enemies = np.infty
-            # os.system('clear')
-            relative_score = obs.observation['score_cumulative'][0] + (obs.reward * 10)
-            for sub_agent in self.groups:
-                sub_agent.apply_rewards(relative_score)
-                sub_agent.update_tables()
-            print(obs.observation['score_cumulative'][0] + obs.reward *10, "\n")
-
             if self.wins + self.loss > 0:
                 print("%.2f%% percent win rate" % (self.wins/ (self.wins + self.loss) * 100))
 
