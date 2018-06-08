@@ -60,6 +60,7 @@ class FlankingAgent(base_agent.BaseAgent):
         self.steps += 1
 
         if obs.last():
+            self.prev_enemies = np.infty
             # os.system('clear')
             relative_score = obs.observation['score_cumulative'][0] + (obs.reward * 10)
             for sub_agent in self.groups:
