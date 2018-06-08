@@ -52,7 +52,7 @@ class Agent2(base_agent.BaseAgent):
         Agent2.prev_enemies = enemy_units
 
         if obs.last():
-            if wins + loss > 0:
+            if Agent2.wins + Agent2.loss > 0:
                 print("%.2f%% percent win rate" % (Agent2.wins/ (Agent2.wins + Agent2.loss) * 100))
 
             print("Wins: %d, Loss: %d" % (Agent2.wins, Agent2.loss))
